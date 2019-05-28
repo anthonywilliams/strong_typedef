@@ -8,7 +8,7 @@
 namespace jss {
 
     enum class strong_typedef_properties {
-        none,
+        none = 0,
         equality_comparable= 1,
         pre_incrementable= 2,
         post_incrementable= 4,
