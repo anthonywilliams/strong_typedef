@@ -21,7 +21,8 @@ namespace jss {
         hashable= 512,
         streamable= 1024,
         incrementable= pre_incrementable | post_incrementable,
-        decrementable= pre_decrementable | post_decrementable
+        decrementable= pre_decrementable | post_decrementable,
+        comparable= ordered | equality_comparable
     };
 
     constexpr strong_typedef_properties operator&(
