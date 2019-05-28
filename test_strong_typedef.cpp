@@ -2,6 +2,7 @@
 #include <type_traits>
 #include <assert.h>
 #include <iostream>
+#include <sstream>
 
 void test_strong_typedef_is_not_original() {
     std::cout << __FUNCTION__ << std::endl;
@@ -287,15 +288,18 @@ void test_by_default_strong_typedef_is_not_subtractable() {
     using ST= jss::strong_typedef<struct Tag, int>;
 
     assert(sizeof(test_subtractable<ST, ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_subtractable<ST, std::string>(0)) == sizeof(large_result));
+    assert(
+        sizeof(test_subtractable<ST, std::string>(0)) == sizeof(large_result));
     assert(sizeof(test_subtractable<ST, int>(0)) == sizeof(large_result));
-    assert(sizeof(test_subtractable<std::string, ST>(0)) == sizeof(large_result));
+    assert(
+        sizeof(test_subtractable<std::string, ST>(0)) == sizeof(large_result));
     assert(sizeof(test_subtractable<int, ST>(0)) == sizeof(large_result));
     assert(
         sizeof(test_subtractable<std::string, std::string>(0)) ==
         sizeof(large_result));
     assert(sizeof(test_subtractable<int, int>(0)) == sizeof(small_result));
-    assert(sizeof(test_subtractable<std::string, int>(0)) == sizeof(large_result));
+    assert(
+        sizeof(test_subtractable<std::string, int>(0)) == sizeof(large_result));
 }
 
 void test_strong_typedef_is_subtractable_if_tagged_as_such() {
@@ -304,9 +308,11 @@ void test_strong_typedef_is_subtractable_if_tagged_as_such() {
     using ST= jss::strong_typedef<
         struct Tag, int, jss::strong_typedef_properties::subtractable>;
     assert(sizeof(test_subtractable<ST, ST>(0)) == sizeof(small_result));
-    assert(sizeof(test_subtractable<ST, std::string>(0)) == sizeof(large_result));
+    assert(
+        sizeof(test_subtractable<ST, std::string>(0)) == sizeof(large_result));
     assert(sizeof(test_subtractable<ST, int>(0)) == sizeof(small_result));
-    assert(sizeof(test_subtractable<std::string, ST>(0)) == sizeof(large_result));
+    assert(
+        sizeof(test_subtractable<std::string, ST>(0)) == sizeof(large_result));
     assert(sizeof(test_subtractable<int, ST>(0)) == sizeof(small_result));
 }
 
@@ -382,7 +388,7 @@ void test_strong_typedef_is_mixed_ordered_if_tagged_as_such() {
 template <typename T>
 typename std::enable_if<
     std::is_convertible<
-        decltype(std::hash<T>()(std::declval<T const&>())),size_t>::value,
+        decltype(std::hash<T>()(std::declval<T const &>())), size_t>::value,
     small_result>::type
 test_hashable(int);
 template <typename T> large_result test_hashable(...);
@@ -406,8 +412,43 @@ void test_strong_typedef_is_hashable_if_tagged_as_such() {
 
     std::string s("hello");
     ST st(s);
-    assert(std::hash<ST>()(st)==std::hash<std::string>()(s));
-   
+    assert(std::hash<ST>()(st) == std::hash<std::string>()(s));
+}
+
+template <typename T>
+typename std::enable_if<
+    std::is_convertible<
+        decltype(std::declval<std::ostream &>() << std::declval<T const &>()),
+        std::ostream &>::value,
+    small_result>::type
+test_streamable(int);
+template <typename T> large_result test_streamable(...);
+
+void test_by_default_strong_typedef_is_not_streamable() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<struct Tag, int>;
+
+    assert(sizeof(test_streamable<ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_streamable<std::string>(0)) == sizeof(small_result));
+    assert(sizeof(test_streamable<int>(0)) == sizeof(small_result));
+}
+
+void test_strong_typedef_is_streamable_if_tagged_as_such() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<
+        struct Tag, std::string, jss::strong_typedef_properties::streamable>;
+    static_assert(
+        sizeof(test_streamable<ST>(0)) == sizeof(small_result),
+        "Must be streamable when tagged");
+
+    std::string s("hello");
+    ST st(s);
+    std::stringstream os;
+    os << st;
+
+    assert(os.str() == s);
 }
 
 int main() {
@@ -433,4 +474,6 @@ int main() {
     test_strong_typedef_is_mixed_ordered_if_tagged_as_such();
     test_by_default_strong_typedef_is_not_hashable();
     test_strong_typedef_is_hashable_if_tagged_as_such();
+    test_by_default_strong_typedef_is_not_streamable();
+    test_strong_typedef_is_streamable_if_tagged_as_such();
 }
