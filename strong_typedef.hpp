@@ -11,7 +11,8 @@ namespace jss {
         pre_incrementable= 2,
         post_incrementable= 4,
         pre_decrementable= 8,
-        post_decrementable= 16
+        post_decrementable= 16,
+        addable= 32
     };
 
     constexpr strong_typedef_properties operator&(
@@ -50,7 +51,9 @@ namespace jss {
     };
 
     namespace detail {
-        template <typename, strong_typedef_properties>
+        template <
+            typename,
+            strong_typedef_properties= strong_typedef_properties::none>
         struct is_strong_typedef_with_properties : std::false_type {};
 
         template <
@@ -67,56 +70,106 @@ namespace jss {
     }
 
     template <typename T>
-    typename std::enable_if<
+    constexpr typename std::enable_if<
         detail::is_strong_typedef_with_properties<
             T, strong_typedef_properties::equality_comparable>::value,
         bool>::type
-    operator==(T const &lhs, T const &rhs) {
+    operator==(T const &lhs, T const &rhs) noexcept(noexcept(
+        std::declval<T &>().underlying_value() ==
+        std::declval<T &>().underlying_value())) {
         return lhs.underlying_value() == rhs.underlying_value();
     }
 
     template <
         typename Tag, typename ValueType, strong_typedef_properties Properties>
-    typename std::enable_if<
+    constexpr typename std::enable_if<
         (Properties & strong_typedef_properties::pre_incrementable) ==
             strong_typedef_properties::pre_incrementable,
         strong_typedef<Tag, ValueType, Properties> &>::type
-    operator++(strong_typedef<Tag, ValueType, Properties> &self) {
+    operator++(strong_typedef<Tag, ValueType, Properties> &self) noexcept(
+        noexcept(++std::declval<ValueType &>())) {
         ++self.underlying_value();
         return self;
     }
 
     template <
         typename Tag, typename ValueType, strong_typedef_properties Properties>
-    typename std::enable_if<
+    constexpr typename std::enable_if<
         (Properties & strong_typedef_properties::post_incrementable) ==
             strong_typedef_properties::post_incrementable,
         strong_typedef<Tag, ValueType, Properties> &>::type
-    operator++(strong_typedef<Tag, ValueType, Properties> &self, int) {
+    operator++(strong_typedef<Tag, ValueType, Properties> &self, int) noexcept(
+        noexcept(std::declval<ValueType &>()++)) {
         self.underlying_value()++;
         return self;
     }
 
     template <
         typename Tag, typename ValueType, strong_typedef_properties Properties>
-    typename std::enable_if<
+    constexpr typename std::enable_if<
         (Properties & strong_typedef_properties::pre_decrementable) ==
             strong_typedef_properties::pre_decrementable,
         strong_typedef<Tag, ValueType, Properties> &>::type
-    operator--(strong_typedef<Tag, ValueType, Properties> &self) {
+    operator--(strong_typedef<Tag, ValueType, Properties> &self) noexcept(
+        noexcept(--std::declval<ValueType &>())) {
         --self.underlying_value();
         return self;
     }
 
     template <
         typename Tag, typename ValueType, strong_typedef_properties Properties>
-    typename std::enable_if<
+    constexpr typename std::enable_if<
         (Properties & strong_typedef_properties::post_decrementable) ==
             strong_typedef_properties::post_decrementable,
         strong_typedef<Tag, ValueType, Properties> &>::type
-    operator--(strong_typedef<Tag, ValueType, Properties> &self, int) {
+    operator--(strong_typedef<Tag, ValueType, Properties> &self, int) noexcept(
+        noexcept(std::declval<ValueType &>()--)) {
         self.underlying_value()--;
         return self;
+    }
+
+    template <typename Lhs, typename Rhs>
+    constexpr typename std::enable_if<
+        detail::is_strong_typedef_with_properties<
+            Lhs, strong_typedef_properties::addable>::value &&
+            !detail::is_strong_typedef_with_properties<Rhs>::value &&
+            (sizeof(
+                 std::declval<typename Lhs::underlying_value_type &>() +
+                 std::declval<Rhs &>()) != 0),
+        Lhs>::type
+    operator+(Lhs &lhs, Rhs &rhs) noexcept(noexcept(
+        std::declval<typename Lhs::underlying_value_type &>() +
+        std::declval<Rhs &>())) {
+        return Lhs(lhs.underlying_value() + rhs);
+    }
+
+    template <typename ST>
+    constexpr typename std::enable_if<
+        detail::is_strong_typedef_with_properties<
+            ST, strong_typedef_properties::addable>::value &&
+            (sizeof(
+                 std::declval<typename ST::underlying_value_type &>() +
+                 std::declval<typename ST::underlying_value_type &>()) != 0),
+        ST>::type
+    operator+(ST &lhs, ST &rhs) noexcept(noexcept(
+        std::declval<typename ST::underlying_value_type &>() +
+        std::declval<typename ST::underlying_value_type &>())) {
+        return Lhs(lhs.underlying_value() + rhs.underlying_value());
+    }
+
+    template <typename Lhs, typename Rhs>
+    constexpr typename std::enable_if<
+        detail::is_strong_typedef_with_properties<
+            Rhs, strong_typedef_properties::addable>::value &&
+            !detail::is_strong_typedef_with_properties<Lhs>::value &&
+            (sizeof(
+                 std::declval<Lhs &>() +
+                 std::declval<typename Rhs::underlying_value_type &>()) != 0),
+        Rhs>::type
+    operator+(Lhs &lhs, Rhs &rhs) noexcept(noexcept(
+        std::declval<Lhs &>() +
+        std::declval<typename Rhs::underlying_value_type &>())) {
+        return Rhs(lhs + rhs.underlying_value());
     }
 
 }

@@ -97,7 +97,8 @@ void test_strong_typedef_is_copyable_and_movable() {
 
 template <typename T>
 typename std::enable_if<
-    sizeof(std::declval<T const &>() == std::declval<T const&>()) != 0, small_result>::type
+    sizeof(std::declval<T const &>() == std::declval<T const &>()) != 0,
+    small_result>::type
 test_equality(int);
 template <typename T> large_result test_equality(...);
 
@@ -127,13 +128,12 @@ void test_can_get_underlying_value_and_type() {
         "Strong typedef must expose underlying type");
     static_assert(
         std::is_same<
-            decltype(std::declval<ST &>().underlying_value()),
-            X&>::value,
+            decltype(std::declval<ST &>().underlying_value()), X &>::value,
         "Strong typedef must expose underlying value");
     static_assert(
         std::is_same<
             decltype(std::declval<ST const &>().underlying_value()),
-            X const&>::value,
+            X const &>::value,
         "Strong typedef must expose underlying value");
     assert(st.underlying_value().i == 42);
 }
@@ -229,6 +229,41 @@ void test_strong_typedef_is_decrementable_if_tagged_as_such() {
     assert(sizeof(test_post_decrementable<ST_post>(0)) == sizeof(small_result));
 }
 
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>() + std::declval<U &>()) != 0, small_result>::type
+test_addable(int);
+template <typename T, typename U> large_result test_addable(...);
+
+void test_by_default_strong_typedef_is_not_addable() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<struct Tag, std::string>;
+
+    assert(sizeof(test_addable<ST, ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_addable<ST, std::string>(0)) == sizeof(large_result));
+    assert(sizeof(test_addable<ST, int>(0)) == sizeof(large_result));
+    assert(sizeof(test_addable<std::string, ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_addable<int, ST>(0)) == sizeof(large_result));
+    assert(
+        sizeof(test_addable<std::string, std::string>(0)) ==
+        sizeof(small_result));
+    assert(sizeof(test_addable<int, int>(0)) == sizeof(small_result));
+    assert(sizeof(test_addable<std::string, int>(0)) == sizeof(large_result));
+}
+
+void test_strong_typedef_is_addable_if_tagged_as_such() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<
+        struct Tag, std::string, jss::strong_typedef_properties::addable>;
+    assert(sizeof(test_addable<ST, ST>(0)) == sizeof(small_result));
+    assert(sizeof(test_addable<ST, std::string>(0)) == sizeof(small_result));
+    assert(sizeof(test_addable<ST, int>(0)) == sizeof(large_result));
+    assert(sizeof(test_addable<std::string, ST>(0)) == sizeof(small_result));
+    assert(sizeof(test_addable<int, ST>(0)) == sizeof(large_result));
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -243,4 +278,6 @@ int main() {
     test_strong_typedef_is_incrementable_if_tagged_as_such();
     test_by_default_strong_typedef_is_not_decrementable();
     test_strong_typedef_is_decrementable_if_tagged_as_such();
+    test_by_default_strong_typedef_is_not_addable();
+    test_strong_typedef_is_addable_if_tagged_as_such();
 }
