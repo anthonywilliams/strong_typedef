@@ -12,7 +12,8 @@ namespace jss {
         post_incrementable= 4,
         pre_decrementable= 8,
         post_decrementable= 16,
-        addable= 32
+        addable= 32,
+        subtractable= 64
     };
 
     constexpr strong_typedef_properties operator&(
@@ -144,9 +145,11 @@ namespace jss {
         detail::is_strong_typedef_with_properties<
             Lhs, strong_typedef_properties::addable>::value &&
             !detail::is_strong_typedef_with_properties<Rhs>::value &&
-            (sizeof(
-                 std::declval<typename Lhs::underlying_value_type &>() +
-                 std::declval<Rhs &>()) != 0),
+            std::is_convertible<
+                decltype(
+                    std::declval<typename Lhs::underlying_value_type &>() +
+                    std::declval<Rhs &>()),
+                typename Lhs::underlying_value_type>::value,
         Lhs>::type
     operator+(Lhs &lhs, Rhs &rhs) noexcept(noexcept(
         std::declval<typename Lhs::underlying_value_type &>() +
@@ -158,9 +161,11 @@ namespace jss {
     constexpr typename std::enable_if<
         detail::is_strong_typedef_with_properties<
             ST, strong_typedef_properties::addable>::value &&
-            (sizeof(
-                 std::declval<typename ST::underlying_value_type &>() +
-                 std::declval<typename ST::underlying_value_type &>()) != 0),
+            std::is_convertible<
+                decltype(
+                    std::declval<typename ST::underlying_value_type &>() +
+                    std::declval<typename ST::underlying_value_type &>()),
+                typename ST::underlying_value_type>::value,
         ST>::type
     operator+(ST &lhs, ST &rhs) noexcept(noexcept(
         std::declval<typename ST::underlying_value_type &>() +
@@ -173,14 +178,66 @@ namespace jss {
         detail::is_strong_typedef_with_properties<
             Rhs, strong_typedef_properties::addable>::value &&
             !detail::is_strong_typedef_with_properties<Lhs>::value &&
-            (sizeof(
-                 std::declval<Lhs &>() +
-                 std::declval<typename Rhs::underlying_value_type &>()) != 0),
+            std::is_convertible<
+                decltype(
+                    std::declval<Lhs &>() +
+                    std::declval<typename Rhs::underlying_value_type &>()),
+                typename Rhs::underlying_value_type>::value,
         Rhs>::type
     operator+(Lhs &lhs, Rhs &rhs) noexcept(noexcept(
         std::declval<Lhs &>() +
         std::declval<typename Rhs::underlying_value_type &>())) {
         return Rhs(lhs + rhs.underlying_value());
+    }
+
+    template <typename Lhs, typename Rhs>
+    constexpr typename std::enable_if<
+        detail::is_strong_typedef_with_properties<
+            Lhs, strong_typedef_properties::subtractable>::value &&
+            !detail::is_strong_typedef_with_properties<Rhs>::value &&
+            std::is_convertible<
+                decltype(
+                    std::declval<typename Lhs::underlying_value_type &>() -
+                    std::declval<Rhs &>()),
+                typename Lhs::underlying_value_type>::value,
+        Lhs>::type
+    operator-(Lhs &lhs, Rhs &rhs) noexcept(noexcept(
+        std::declval<typename Lhs::underlying_value_type &>() -
+        std::declval<Rhs &>())) {
+        return Lhs(lhs.underlying_value() - rhs);
+    }
+
+    template <typename ST>
+    constexpr typename std::enable_if<
+        detail::is_strong_typedef_with_properties<
+            ST, strong_typedef_properties::subtractable>::value &&
+            std::is_convertible<
+                decltype(
+                    std::declval<typename ST::underlying_value_type &>() -
+                    std::declval<typename ST::underlying_value_type &>()),
+                typename ST::underlying_value_type>::value,
+        ST>::type
+    operator-(ST &lhs, ST &rhs) noexcept(noexcept(
+        std::declval<typename ST::underlying_value_type &>() -
+        std::declval<typename ST::underlying_value_type &>())) {
+        return Lhs(lhs.underlying_value() - rhs.underlying_value());
+    }
+
+    template <typename Lhs, typename Rhs>
+    constexpr typename std::enable_if<
+        detail::is_strong_typedef_with_properties<
+            Rhs, strong_typedef_properties::subtractable>::value &&
+            !detail::is_strong_typedef_with_properties<Lhs>::value &&
+            std::is_convertible<
+                decltype(
+                    std::declval<Lhs &>() -
+                    std::declval<typename Rhs::underlying_value_type &>()),
+                typename Rhs::underlying_value_type>::value,
+        Rhs>::type
+    operator-(Lhs &lhs, Rhs &rhs) noexcept(noexcept(
+        std::declval<Lhs &>() -
+        std::declval<typename Rhs::underlying_value_type &>())) {
+        return Rhs(lhs - rhs.underlying_value());
     }
 
 }

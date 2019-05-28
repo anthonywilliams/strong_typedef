@@ -275,6 +275,41 @@ void test_strong_typedef_is_addable_if_tagged_as_such() {
     assert(sizeof(test_addable<int, ST>(0)) == sizeof(large_result));
 }
 
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>() - std::declval<U &>()) != 0, small_result>::type
+test_subtractable(int);
+template <typename T, typename U> large_result test_subtractable(...);
+
+void test_by_default_strong_typedef_is_not_subtractable() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<struct Tag, int>;
+
+    assert(sizeof(test_subtractable<ST, ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_subtractable<ST, std::string>(0)) == sizeof(large_result));
+    assert(sizeof(test_subtractable<ST, int>(0)) == sizeof(large_result));
+    assert(sizeof(test_subtractable<std::string, ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_subtractable<int, ST>(0)) == sizeof(large_result));
+    assert(
+        sizeof(test_subtractable<std::string, std::string>(0)) ==
+        sizeof(large_result));
+    assert(sizeof(test_subtractable<int, int>(0)) == sizeof(small_result));
+    assert(sizeof(test_subtractable<std::string, int>(0)) == sizeof(large_result));
+}
+
+void test_strong_typedef_is_subtractable_if_tagged_as_such() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<
+        struct Tag, int, jss::strong_typedef_properties::subtractable>;
+    assert(sizeof(test_subtractable<ST, ST>(0)) == sizeof(small_result));
+    assert(sizeof(test_subtractable<ST, std::string>(0)) == sizeof(large_result));
+    assert(sizeof(test_subtractable<ST, int>(0)) == sizeof(small_result));
+    assert(sizeof(test_subtractable<std::string, ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_subtractable<int, ST>(0)) == sizeof(small_result));
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -291,4 +326,6 @@ int main() {
     test_strong_typedef_is_decrementable_if_tagged_as_such();
     test_by_default_strong_typedef_is_not_addable();
     test_strong_typedef_is_addable_if_tagged_as_such();
+    test_by_default_strong_typedef_is_not_subtractable();
+    test_strong_typedef_is_subtractable_if_tagged_as_such();
 }
