@@ -102,6 +102,13 @@ typename std::enable_if<
 test_equality(int);
 template <typename T> large_result test_equality(...);
 
+template <typename T>
+typename std::enable_if<
+    sizeof(std::declval<T const &>() != std::declval<T const &>()) != 0,
+    small_result>::type
+test_inequality(int);
+template <typename T> large_result test_inequality(...);
+
 void test_by_default_strong_typedef_is_not_equality_comparable() {
     std::cout << __FUNCTION__ << std::endl;
 
@@ -109,6 +116,8 @@ void test_by_default_strong_typedef_is_not_equality_comparable() {
 
     assert(sizeof(test_equality<ST>(0)) == sizeof(large_result));
     assert(sizeof(test_equality<std::string>(0)) == sizeof(small_result));
+    assert(sizeof(test_inequality<ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_inequality<std::string>(0)) == sizeof(small_result));
 }
 
 void test_can_get_underlying_value_and_type() {
@@ -147,6 +156,8 @@ void test_strong_typedef_is_equality_comparable_if_tagged_as_such() {
 
     assert(sizeof(test_equality<ST>(0)) == sizeof(small_result));
     assert(sizeof(test_equality<std::string>(0)) == sizeof(small_result));
+    assert(sizeof(test_inequality<ST>(0)) == sizeof(small_result));
+    assert(sizeof(test_inequality<std::string>(0)) == sizeof(small_result));
 }
 
 template <typename T>

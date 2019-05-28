@@ -80,6 +80,17 @@ namespace jss {
         return lhs.underlying_value() == rhs.underlying_value();
     }
 
+    template <typename T>
+    constexpr typename std::enable_if<
+        detail::is_strong_typedef_with_properties<
+            T, strong_typedef_properties::equality_comparable>::value,
+        bool>::type
+    operator!=(T const &lhs, T const &rhs) noexcept(noexcept(
+        std::declval<T &>().underlying_value() !=
+        std::declval<T &>().underlying_value())) {
+        return lhs.underlying_value() != rhs.underlying_value();
+    }
+
     template <
         typename Tag, typename ValueType, strong_typedef_properties Properties>
     constexpr typename std::enable_if<
