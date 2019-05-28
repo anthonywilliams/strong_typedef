@@ -189,6 +189,46 @@ void test_strong_typedef_is_incrementable_if_tagged_as_such() {
     assert(sizeof(test_post_incrementable<ST_post>(0)) == sizeof(small_result));
 }
 
+template <typename T>
+typename std::enable_if<sizeof(std::declval<T &>()--) != 0, small_result>::type
+test_post_decrementable(int);
+template <typename T> large_result test_post_decrementable(...);
+
+template <typename T>
+typename std::enable_if<sizeof(--std::declval<T &>()) != 0, small_result>::type
+test_pre_decrementable(int);
+template <typename T> large_result test_pre_decrementable(...);
+
+void test_by_default_strong_typedef_is_not_decrementable() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<struct Tag, int>;
+
+    assert(sizeof(test_post_decrementable<ST>(0)) == sizeof(large_result));
+    assert(
+        sizeof(test_post_decrementable<std::string>(0)) ==
+        sizeof(large_result));
+    assert(sizeof(test_post_decrementable<int>(0)) == sizeof(small_result));
+    assert(sizeof(test_pre_decrementable<ST>(0)) == sizeof(large_result));
+    assert(
+        sizeof(test_pre_decrementable<std::string>(0)) == sizeof(large_result));
+    assert(sizeof(test_pre_decrementable<int>(0)) == sizeof(small_result));
+}
+
+void test_strong_typedef_is_decrementable_if_tagged_as_such() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST_post= jss::strong_typedef<
+        struct Tag, int, jss::strong_typedef_properties::post_decrementable>;
+    using ST_pre= jss::strong_typedef<
+        struct Tag, int, jss::strong_typedef_properties::pre_decrementable>;
+
+    assert(sizeof(test_pre_decrementable<ST_pre>(0)) == sizeof(small_result));
+    assert(sizeof(test_pre_decrementable<ST_post>(0)) == sizeof(large_result));
+    assert(sizeof(test_post_decrementable<ST_pre>(0)) == sizeof(large_result));
+    assert(sizeof(test_post_decrementable<ST_post>(0)) == sizeof(small_result));
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -201,4 +241,6 @@ int main() {
     test_strong_typedef_is_equality_comparable_if_tagged_as_such();
     test_by_default_strong_typedef_is_not_incrementable();
     test_strong_typedef_is_incrementable_if_tagged_as_such();
+    test_by_default_strong_typedef_is_not_decrementable();
+    test_strong_typedef_is_decrementable_if_tagged_as_such();
 }

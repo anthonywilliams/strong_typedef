@@ -9,7 +9,9 @@ namespace jss {
         none,
         equality_comparable= 1,
         pre_incrementable= 2,
-        post_incrementable= 4
+        post_incrementable= 4,
+        pre_decrementable= 8,
+        post_decrementable= 16
     };
 
     constexpr strong_typedef_properties operator&(
@@ -92,6 +94,28 @@ namespace jss {
         strong_typedef<Tag, ValueType, Properties> &>::type
     operator++(strong_typedef<Tag, ValueType, Properties> &self, int) {
         self.underlying_value()++;
+        return self;
+    }
+
+    template <
+        typename Tag, typename ValueType, strong_typedef_properties Properties>
+    typename std::enable_if<
+        (Properties & strong_typedef_properties::pre_decrementable) ==
+            strong_typedef_properties::pre_decrementable,
+        strong_typedef<Tag, ValueType, Properties> &>::type
+    operator--(strong_typedef<Tag, ValueType, Properties> &self) {
+        --self.underlying_value();
+        return self;
+    }
+
+    template <
+        typename Tag, typename ValueType, strong_typedef_properties Properties>
+    typename std::enable_if<
+        (Properties & strong_typedef_properties::post_decrementable) ==
+            strong_typedef_properties::post_decrementable,
+        strong_typedef<Tag, ValueType, Properties> &>::type
+    operator--(strong_typedef<Tag, ValueType, Properties> &self, int) {
+        self.underlying_value()--;
         return self;
     }
 
