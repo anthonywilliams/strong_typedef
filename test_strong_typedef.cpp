@@ -310,6 +310,75 @@ void test_strong_typedef_is_subtractable_if_tagged_as_such() {
     assert(sizeof(test_subtractable<int, ST>(0)) == sizeof(small_result));
 }
 
+template <typename T, typename U>
+typename std::enable_if<
+    std::is_same<
+        bool, decltype(std::declval<T const &>() < std::declval<U const &>())>::
+            value &&
+        std::is_same<
+            bool, decltype(
+                      std::declval<T const &>() >
+                      std::declval<U const &>())>::value &&
+        std::is_same<
+            bool, decltype(
+                      std::declval<T const &>() <=
+                      std::declval<U const &>())>::value &&
+        std::is_same<
+            bool,
+            decltype(
+                std::declval<T const &>() >= std::declval<U const &>())>::value,
+    small_result>::type
+test_ordered(int);
+template <typename T, typename U> large_result test_ordered(...);
+
+void test_by_default_strong_typedef_is_not_ordered() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<struct Tag, int>;
+
+    assert(sizeof(test_ordered<ST, ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<ST, std::string>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<ST, int>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<int, ST>(0)) == sizeof(large_result));
+    assert(
+        sizeof(test_ordered<std::string, std::string>(0)) ==
+        sizeof(small_result));
+    assert(sizeof(test_ordered<int, int>(0)) == sizeof(small_result));
+    assert(sizeof(test_ordered<float, int>(0)) == sizeof(small_result));
+    assert(sizeof(test_ordered<std::string, int>(0)) == sizeof(large_result));
+}
+
+void test_strong_typedef_is_ordered_if_tagged_as_such() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<
+        struct Tag, int, jss::strong_typedef_properties::ordered>;
+    using ST2= jss::strong_typedef<
+        struct Tag2, int, jss::strong_typedef_properties::ordered>;
+    assert(sizeof(test_ordered<ST, ST>(0)) == sizeof(small_result));
+    assert(sizeof(test_ordered<ST, ST2>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<ST, std::string>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<ST, int>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<int, ST>(0)) == sizeof(large_result));
+}
+
+void test_strong_typedef_is_mixed_ordered_if_tagged_as_such() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<
+        struct Tag, int, jss::strong_typedef_properties::mixed_ordered>;
+    using ST2= jss::strong_typedef<
+        struct Tag2, int, jss::strong_typedef_properties::mixed_ordered>;
+    assert(sizeof(test_ordered<ST, ST>(0)) == sizeof(small_result));
+    assert(sizeof(test_ordered<ST, ST2>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<ST, std::string>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<ST, int>(0)) == sizeof(small_result));
+    assert(sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_ordered<int, ST>(0)) == sizeof(small_result));
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -328,4 +397,7 @@ int main() {
     test_strong_typedef_is_addable_if_tagged_as_such();
     test_by_default_strong_typedef_is_not_subtractable();
     test_strong_typedef_is_subtractable_if_tagged_as_such();
+    test_by_default_strong_typedef_is_not_ordered();
+    test_strong_typedef_is_ordered_if_tagged_as_such();
+    test_strong_typedef_is_mixed_ordered_if_tagged_as_such();
 }
