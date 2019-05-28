@@ -33,6 +33,14 @@ namespace jss {
             static_cast<underlying>(lhs) & static_cast<underlying>(rhs));
     }
 
+    constexpr strong_typedef_properties operator|(
+        strong_typedef_properties lhs, strong_typedef_properties rhs) noexcept {
+        typedef typename std::underlying_type<strong_typedef_properties>::type
+            underlying;
+        return static_cast<strong_typedef_properties>(
+            static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
+    }
+
     template <
         typename Tag, typename ValueType,
         strong_typedef_properties Properties= strong_typedef_properties::none>

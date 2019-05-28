@@ -451,6 +451,27 @@ void test_strong_typedef_is_streamable_if_tagged_as_such() {
     assert(os.str() == s);
 }
 
+void test_properties_can_be_combined() {
+    std::cout << __FUNCTION__ << std::endl;
+    using ST= jss::strong_typedef<
+        struct Tag, std::string,
+        jss::strong_typedef_properties::streamable |
+            jss::strong_typedef_properties::hashable |
+        jss::strong_typedef_properties::comparable>;
+    static_assert(
+        sizeof(test_streamable<ST>(0)) == sizeof(small_result),
+        "Must be streamable when tagged");
+    static_assert(
+        sizeof(test_hashable<ST>(0)) == sizeof(small_result),
+        "Must be hashable when tagged");
+    static_assert(
+        sizeof(test_ordered<ST,ST>(0)) == sizeof(small_result),
+        "Must be ordered when tagged");
+    static_assert(
+        sizeof(test_equality<ST>(0)) == sizeof(small_result),
+        "Must be equality-comparable when tagged");
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -476,4 +497,5 @@ int main() {
     test_strong_typedef_is_hashable_if_tagged_as_such();
     test_by_default_strong_typedef_is_not_streamable();
     test_strong_typedef_is_streamable_if_tagged_as_such();
+    test_properties_can_be_combined();
 }
