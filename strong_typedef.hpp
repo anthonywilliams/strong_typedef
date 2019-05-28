@@ -2,6 +2,7 @@
 #define JSS_STRONG_TYPEDEF_HPP
 #include <type_traits>
 #include <utility>
+#include <functional>
 
 namespace jss {
 
@@ -16,6 +17,7 @@ namespace jss {
         subtractable= 64,
         ordered= 128,
         mixed_ordered= 256,
+        hashable= 512,
         incrementable= pre_incrementable | post_incrementable,
         decrementable= pre_decrementable | post_decrementable
     };
@@ -461,6 +463,26 @@ namespace jss {
         std::declval<typename Rhs::underlying_value_type const &>())) {
         return lhs > rhs.underlying_value();
     }
+
+}
+
+namespace std {
+    template <
+        typename Tag, typename ValueType,
+        jss::strong_typedef_properties Properties>
+    struct hash<jss::strong_typedef<Tag, ValueType, Properties>> {
+        template <typename Arg>
+        typename std::enable_if<
+            std::is_same<
+                Arg, jss::strong_typedef<Tag, ValueType, Properties>>::value &&
+                jss::detail::is_strong_typedef_with_properties<
+                Arg, jss::strong_typedef_properties::hashable>::value,
+            size_t>::type
+        operator()(Arg const &arg) const noexcept(noexcept(
+            std::hash<ValueType>()(std::declval<ValueType const &>()))) {
+            return std::hash<ValueType>()(arg.underlying_value());
+        }
+    };
 
 }
 

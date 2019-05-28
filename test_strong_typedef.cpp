@@ -379,6 +379,37 @@ void test_strong_typedef_is_mixed_ordered_if_tagged_as_such() {
     assert(sizeof(test_ordered<int, ST>(0)) == sizeof(small_result));
 }
 
+template <typename T>
+typename std::enable_if<
+    std::is_convertible<
+        decltype(std::hash<T>()(std::declval<T const&>())),size_t>::value,
+    small_result>::type
+test_hashable(int);
+template <typename T> large_result test_hashable(...);
+
+void test_by_default_strong_typedef_is_not_hashable() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<struct Tag, int>;
+
+    assert(sizeof(test_hashable<ST>(0)) == sizeof(large_result));
+    assert(sizeof(test_hashable<std::string>(0)) == sizeof(small_result));
+    assert(sizeof(test_hashable<int>(0)) == sizeof(small_result));
+}
+
+void test_strong_typedef_is_hashable_if_tagged_as_such() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST= jss::strong_typedef<
+        struct Tag, std::string, jss::strong_typedef_properties::hashable>;
+    assert(sizeof(test_hashable<ST>(0)) == sizeof(small_result));
+
+    std::string s("hello");
+    ST st(s);
+    assert(std::hash<ST>()(st)==std::hash<std::string>()(s));
+   
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -400,4 +431,6 @@ int main() {
     test_by_default_strong_typedef_is_not_ordered();
     test_strong_typedef_is_ordered_if_tagged_as_such();
     test_strong_typedef_is_mixed_ordered_if_tagged_as_such();
+    test_by_default_strong_typedef_is_not_hashable();
+    test_strong_typedef_is_hashable_if_tagged_as_such();
 }
