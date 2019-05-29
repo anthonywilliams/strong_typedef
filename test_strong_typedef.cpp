@@ -301,6 +301,17 @@ void test_strong_typedef_is_addable_if_tagged_as_such() {
     assert(sizeof(test_addable<ST, int>(0)) == sizeof(large_result));
     assert(sizeof(test_addable<std::string, ST>(0)) == sizeof(small_result));
     assert(sizeof(test_addable<int, ST>(0)) == sizeof(large_result));
+
+    ST st1("hello");
+    ST st2=st1+" world";
+    assert(st1.underlying_value()=="hello");
+    assert(st2.underlying_value()=="hello world");
+    auto st3="goodbye"+st1;
+    assert(st1.underlying_value()=="hello");
+    assert(st3.underlying_value()=="goodbyehello");
+    auto st4=st1+st1;
+    assert(st1.underlying_value()=="hello");
+    assert(st4.underlying_value()=="hellohello");
 }
 
 template <typename T, typename U>
@@ -395,6 +406,22 @@ void test_strong_typedef_is_ordered_if_tagged_as_such() {
     assert(sizeof(test_ordered<ST, int>(0)) == sizeof(large_result));
     assert(sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
     assert(sizeof(test_ordered<int, ST>(0)) == sizeof(large_result));
+
+    ST const st1(42);
+    ST const st2(43);
+
+    assert(!(st1<st1));
+    assert(!(st1>st1));
+    assert(st1<=st1);
+    assert(st1>=st1);
+    assert(st1<st2);
+    assert(st1<=st2);
+    assert(!(st2<st1));
+    assert(!(st2<=st1));
+    assert(st2>st1);
+    assert(st2>=st1);
+    assert(!(st1>st2));
+    assert(!(st1>=st2));
 }
 
 void test_strong_typedef_is_mixed_ordered_if_tagged_as_such() {
@@ -410,6 +437,22 @@ void test_strong_typedef_is_mixed_ordered_if_tagged_as_such() {
     assert(sizeof(test_ordered<ST, int>(0)) == sizeof(small_result));
     assert(sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
     assert(sizeof(test_ordered<int, ST>(0)) == sizeof(small_result));
+
+    ST constexpr st1(42);
+    int const st2(43);
+
+    assert(!(st1<st1));
+    assert(!(st1>st1));
+    assert(st1<=st1);
+    assert(st1>=st1);
+    assert(st1<st2);
+    assert(st1<=st2);
+    assert(!(st2<st1));
+    assert(!(st2<=st1));
+    assert(st2>st1);
+    assert(st2>=st1);
+    assert(!(st1>st2));
+    assert(!(st1>=st2));
 }
 
 template <typename T>
