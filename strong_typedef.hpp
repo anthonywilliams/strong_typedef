@@ -8,7 +8,7 @@
 namespace jss {
 
     enum class strong_typedef_properties {
-        none = 0,
+        none= 0,
         equality_comparable= 1,
         pre_incrementable= 2,
         post_incrementable= 4,
@@ -48,19 +48,21 @@ namespace jss {
     public:
         using underlying_value_type= ValueType;
 
-        explicit strong_typedef(ValueType value_) noexcept(
+        constexpr strong_typedef() noexcept : value() {}
+
+        explicit constexpr strong_typedef(ValueType value_) noexcept(
             std::is_nothrow_move_constructible<ValueType>::value) :
             value(std::move(value_)) {}
 
-        explicit operator ValueType const &() const noexcept {
+        explicit constexpr operator ValueType const &() const noexcept {
             return value;
         }
 
-        ValueType const &underlying_value() const noexcept {
+        constexpr ValueType const &underlying_value() const noexcept {
             return value;
         }
 
-        ValueType &underlying_value() noexcept {
+        constexpr ValueType &underlying_value() noexcept {
             return value;
         }
 

@@ -472,6 +472,28 @@ void test_properties_can_be_combined() {
         "Must be equality-comparable when tagged");
 }
 
+void test_strong_typedef_is_default_constructible(){
+    std::cout << __FUNCTION__ << std::endl;
+
+    struct X{
+        int value;
+
+        X():
+            value(42){}
+        
+    };
+
+    using ST=jss::strong_typedef<struct sometag,X>;
+
+    ST st;
+
+    assert(static_cast<X>(st).value==42);
+
+    jss::strong_typedef<struct footag,int> i;
+
+    assert(static_cast<int>(i)==0);
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -498,4 +520,5 @@ int main() {
     test_by_default_strong_typedef_is_not_streamable();
     test_strong_typedef_is_streamable_if_tagged_as_such();
     test_properties_can_be_combined();
+    test_strong_typedef_is_default_constructible();
 }
