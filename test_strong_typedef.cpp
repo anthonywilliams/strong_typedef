@@ -199,6 +199,20 @@ void test_strong_typedef_is_incrementable_if_tagged_as_such() {
     assert(sizeof(test_pre_incrementable<ST_post>(0)) == sizeof(large_result));
     assert(sizeof(test_post_incrementable<ST_pre>(0)) == sizeof(large_result));
     assert(sizeof(test_post_incrementable<ST_post>(0)) == sizeof(small_result));
+
+    ST_post post1(42);
+    ST_post post2=post1++;
+
+    assert(post1.underlying_value()==43);
+    assert(post2.underlying_value()==42);
+
+    ST_pre pre1(42);
+    ST_pre& pre2=++pre1;
+
+    assert(&pre2==&pre1);
+
+    assert(pre1.underlying_value()==43);
+    
 }
 
 template <typename T>
@@ -239,6 +253,19 @@ void test_strong_typedef_is_decrementable_if_tagged_as_such() {
     assert(sizeof(test_pre_decrementable<ST_post>(0)) == sizeof(large_result));
     assert(sizeof(test_post_decrementable<ST_pre>(0)) == sizeof(large_result));
     assert(sizeof(test_post_decrementable<ST_post>(0)) == sizeof(small_result));
+
+    ST_post post1(42);
+    ST_post post2=post1--;
+
+    assert(post1.underlying_value()==41);
+    assert(post2.underlying_value()==42);
+
+    ST_pre pre1(42);
+    ST_pre& pre2=--pre1;
+
+    assert(&pre2==&pre1);
+
+    assert(pre1.underlying_value()==41);
 }
 
 template <typename T, typename U>

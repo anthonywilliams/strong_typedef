@@ -128,11 +128,12 @@ namespace jss {
     constexpr typename std::enable_if<
         (Properties & strong_typedef_properties::post_incrementable) ==
             strong_typedef_properties::post_incrementable,
-        strong_typedef<Tag, ValueType, Properties> &>::type
+        strong_typedef<Tag, ValueType, Properties> >::type
     operator++(strong_typedef<Tag, ValueType, Properties> &self, int) noexcept(
         noexcept(std::declval<ValueType &>()++)) {
+        strong_typedef res(self);
         self.underlying_value()++;
-        return self;
+        return res;
     }
 
     template <
@@ -152,11 +153,12 @@ namespace jss {
     constexpr typename std::enable_if<
         (Properties & strong_typedef_properties::post_decrementable) ==
             strong_typedef_properties::post_decrementable,
-        strong_typedef<Tag, ValueType, Properties> &>::type
+        strong_typedef<Tag, ValueType, Properties> >::type
     operator--(strong_typedef<Tag, ValueType, Properties> &self, int) noexcept(
         noexcept(std::declval<ValueType &>()--)) {
+        strong_typedef res(self);
         self.underlying_value()--;
-        return self;
+        return res;
     }
 
     template <typename Lhs, typename Rhs>
