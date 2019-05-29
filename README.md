@@ -6,8 +6,9 @@ This is an implementation of a class template that provides a wrapper type that 
 and from the underlying type, but is distinct from it.
 
 The purpose of this is primarily to enable things like indexes and IDs to be unique types. This is
-achieved by specifying a `Tag` type for each `jss::strong_typedef` use. This can be an incomplete
-type, and can be forward-declared in the template parameter directly. For example:
+achieved by specifying a `Tag` type for each `jss::strong_typedef` use, alongside the `ValueType`
+which is being wrapped. This `Tag` type can be an incomplete type, and can be forward-declared in
+the template parameter directly. For example:
 
 ~~~cplusplus
 #include "strong_typedef.hpp"
@@ -20,7 +21,156 @@ using SecondIndex=jss::strong_typedef<struct SecondTag,int>;
 types and are thus not inter-convertible. They also have no additional operations beyond retrieving
 the underlying value, as no properties are specified.
 
-## Behaviour properties
+The third template parameter (`Properties`) is an optional parameter that specifies the operations
+you wish the strong typedef to support. By default it is `jss::strong_typedef_properties::none`
+&mdash; no operations are supported. See [below](#properties) for a full list.
+
+### Declaring Types
+
+You create a typedef by specifying these parameters:
+
+~~~cplusplus
+using type1=jss::strong_typedef<struct type1_tag,int>;
+using type2=jss::strong_typedef<struct type2_tag,int>;
+using type3=jss::strong_typedef<struct type3_tag,std::string,
+    jss::strong_typedef_properties::comparable>;
+~~~
+
+`type1`, `type2` and `type3` are now separate types. They cannot be implicitly converted
+to or from each other or anything else.
+
+### Creating Values
+
+If the underlying type is default-constructible, then so is the new type. You
+can also construct the objects from an object of the wrapped type:
+
+~~~cplusplus
+type1 t1;
+type2 t2(42);
+// type2 e2(t1); // error, type1 cannot be converted to type2
+~~~
+
+### Accessing the Value
+
+`strong_typedef` can wrap built-in or class type, but that's only useful if you
+can access the value. There are two ways to access the value:
+
+* Cast to the stored type: `static_cast<unsigned>(my_channel_index)`
+* Use the `underlying_value` member function: `my_channel_index.underlying_value()`
+
+Using the `underlying_value` member function returns a reference to the stored
+value, which can thus be used to modify non-`const` values, or to call member
+functions on the stored value without taking a copy. This makes it particularly
+useful for class types such as `std::string`.
+
+~~~cplusplus
+using transaction_id=jss::strong_typedef<struct transaction_tag,std::string>;
+
+bool is_a_foo(transaction_id id){
+    auto& s=id.underlying_value();
+    return s.find("foo")!=s.end();
+}
+~~~
+
+### Other Operations
+
+Depending on the [properties](#properties) you've assigned to your type you may
+be able to do other operations on that type, such as compare `a == b` or 
+`a < b`, increment with `++a`, or add two values with `a + b`. You might also be
+able to hash the values with `std::hash<my_typedef>`, or write them to a
+`std::ostream` with `os << a`. Only the behaviours enabled by the `Properties`
+template parameter will be available on any given type. For anything else, you
+need to extract the wrapped value and use that.
+
+## Examples
+
+### IDs
+
+An ID of some description might essentially be a number, but it makes no sense
+to perform much in the way of operations on it. You probably want to be able to
+compare IDs, possibly with an ordering so you can use them as keys in a
+`std::map`, or with hashing so you can use them as keys in `std::unordered_map`,
+and maybe you want to be able to write them to a stream. Such an ID type might
+be declared as follows:
+
+~~~cplusplus
+using widget_id=jss::strong_typedef<struct widget_id_tag,unsigned long long,
+    jss::strong_typedef_properties::comparable |
+    jss::strong_typedef_properties::hashable |
+    jss::strong_typedef_properties::streamable>;
+
+using froob_id=jss::strong_typedef<struct froob_id_tag,unsigned long long,
+    jss::strong_typedef_properties::comparable |
+    jss::strong_typedef_properties::hashable |
+    jss::strong_typedef_properties::streamable>;
+~~~
+
+Note that `froob_id` and `widget_id` are now different types due to the
+different tags used, even though they are both based on `unsigned long
+long`. Therefore any attempt to use a `widget_id` as a `froob_id` or vice-versa
+will lead to a compiler error. It also means you can overload on them:
+
+~~~cplusplus
+void do_stuff(widget_id my_widget);
+void do_stuff(froob_id my_froob);
+
+widget_id some_widget(421982);
+do_stuff(some_widget);
+~~~
+
+Alternatively, an ID might be a string, such as a purchase order number of
+transaction ID:
+
+~~~cplusplus
+using transaction_id=jss::strong_typedef<struct transaction_id_tag,std::string,
+    jss::strong_typedef_properties::comparable |
+    jss::strong_typedef_properties::hashable |
+    jss::strong_typedef_properties::streamable>;
+    
+transaction_id some_transaction("GBA283-HT9X");
+~~~
+
+That works too, since `strong_typedef` can wrap any built-in or class type.
+
+### Indexes
+
+Suppose you have a device that supports a number of channels, so you want to be
+able to retrieve the data for a given channel. Each channel yields a number of
+data items, so you also want to access the data items by index. You could use
+`strong_typedef` to wrap the channel index and the data item index, so they
+can't be confused. You can also make the index types `incrementable` and
+`decrementable` so they can be used in a `for` loop:
+
+~~~cplusplus
+using channel_index=jss::strong_typedef<struct channel_index_tag,unsigned,
+    jss::strong_typedef_properties::comparable |
+    jss::strong_typedef_properties::incrementable |
+    jss::strong_typedef_properties::decrementable>;
+    
+using data_index=jss::strong_typedef<struct data_index_tag,unsigned,
+    jss::strong_typedef_properties::comparable |
+    jss::strong_typedef_properties::incrementable |
+    jss::strong_typedef_properties::decrementable>;
+    
+Data get_data_item(channel_index channel,data_index item);
+data_index get_num_items(channel_index channel);
+void process_data(Data data);
+
+void foo(){
+    channel_index const num_channels(99);
+    for(channel_index channel(0);channel<num_channels;++channel){
+        data_index const num_data_items(get_num_items(channel));
+        for(data_index item(0);item<num_data_items;++item){
+            process_data(get_data_item(channel,item));
+        }
+    }
+}
+~~~
+
+The compiler will complain if you pass the wrong parameters, or compare the
+`channel` against the `item`.
+
+## <a name="properties"></a>Behaviour Properties
 
 The third template parameter (`Properties`) specifies behavioural properties for the new type. It
 must be one of the values of `jss::strong_typedef_properties`, or a value obtained by or-ing them
