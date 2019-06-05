@@ -35,7 +35,7 @@ large_result conv_test(...);
 
 void test_strong_typedef_not_implicitly_convertible_from_source() {
     std::cout << __FUNCTION__ << std::endl;
-    assert(sizeof(conv_test(42)) == sizeof(large_result));
+    static_assert(sizeof(conv_test(42)) == sizeof(large_result));
 }
 
 void test_strong_typedef_explicitly_convertible_to_source() {
@@ -52,7 +52,7 @@ void test_strong_typedef_not_implicitly_convertible_to_source() {
     std::cout << __FUNCTION__ << std::endl;
 
     jss::strong_typedef<struct Tag, int> st(42);
-    assert(sizeof(conv_test_to_int(st)) == sizeof(large_result));
+    static_assert(sizeof(conv_test_to_int(st)) == sizeof(large_result));
 }
 
 void test_strong_typedef_is_copyable_and_movable() {
@@ -115,10 +115,12 @@ void test_by_default_strong_typedef_is_not_equality_comparable() {
 
     using ST= jss::strong_typedef<struct Tag, std::string>;
 
-    assert(sizeof(test_equality<ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_equality<std::string>(0)) == sizeof(small_result));
-    assert(sizeof(test_inequality<ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_inequality<std::string>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_equality<ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_equality<std::string>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_inequality<ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_inequality<std::string>(0)) == sizeof(small_result));
 }
 
 void test_can_get_underlying_value_and_type() {
@@ -155,10 +157,12 @@ void test_strong_typedef_is_equality_comparable_if_tagged_as_such() {
         struct Tag, std::string,
         jss::strong_typedef_properties::equality_comparable>;
 
-    assert(sizeof(test_equality<ST>(0)) == sizeof(small_result));
-    assert(sizeof(test_equality<std::string>(0)) == sizeof(small_result));
-    assert(sizeof(test_inequality<ST>(0)) == sizeof(small_result));
-    assert(sizeof(test_inequality<std::string>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_equality<ST>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_equality<std::string>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_inequality<ST>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_inequality<std::string>(0)) == sizeof(small_result));
 }
 
 template <typename T>
@@ -176,15 +180,19 @@ void test_by_default_strong_typedef_is_not_incrementable() {
 
     using ST= jss::strong_typedef<struct Tag, int>;
 
-    assert(sizeof(test_post_incrementable<ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_post_incrementable<ST>(0)) == sizeof(large_result));
     assert(
         sizeof(test_post_incrementable<std::string>(0)) ==
         sizeof(large_result));
-    assert(sizeof(test_post_incrementable<int>(0)) == sizeof(small_result));
-    assert(sizeof(test_pre_incrementable<ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_post_incrementable<int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_pre_incrementable<ST>(0)) == sizeof(large_result));
     assert(
         sizeof(test_pre_incrementable<std::string>(0)) == sizeof(large_result));
-    assert(sizeof(test_pre_incrementable<int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_pre_incrementable<int>(0)) == sizeof(small_result));
 }
 
 void test_strong_typedef_is_incrementable_if_tagged_as_such() {
@@ -194,11 +202,21 @@ void test_strong_typedef_is_incrementable_if_tagged_as_such() {
         struct Tag, int, jss::strong_typedef_properties::post_incrementable>;
     using ST_pre= jss::strong_typedef<
         struct Tag, int, jss::strong_typedef_properties::pre_incrementable>;
+    using ST_both= jss::strong_typedef<
+        struct ST_both_tag, int, jss::strong_typedef_properties::incrementable>;
 
-    assert(sizeof(test_pre_incrementable<ST_pre>(0)) == sizeof(small_result));
-    assert(sizeof(test_pre_incrementable<ST_post>(0)) == sizeof(large_result));
-    assert(sizeof(test_post_incrementable<ST_pre>(0)) == sizeof(large_result));
-    assert(sizeof(test_post_incrementable<ST_post>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_pre_incrementable<ST_pre>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_pre_incrementable<ST_post>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_post_incrementable<ST_pre>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_post_incrementable<ST_post>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_pre_incrementable<ST_both>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_post_incrementable<ST_both>(0)) == sizeof(small_result));
 
     ST_post post1(42);
     ST_post post2= post1++;
@@ -229,15 +247,19 @@ void test_by_default_strong_typedef_is_not_decrementable() {
 
     using ST= jss::strong_typedef<struct Tag, int>;
 
-    assert(sizeof(test_post_decrementable<ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_post_decrementable<ST>(0)) == sizeof(large_result));
     assert(
         sizeof(test_post_decrementable<std::string>(0)) ==
         sizeof(large_result));
-    assert(sizeof(test_post_decrementable<int>(0)) == sizeof(small_result));
-    assert(sizeof(test_pre_decrementable<ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_post_decrementable<int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_pre_decrementable<ST>(0)) == sizeof(large_result));
     assert(
         sizeof(test_pre_decrementable<std::string>(0)) == sizeof(large_result));
-    assert(sizeof(test_pre_decrementable<int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_pre_decrementable<int>(0)) == sizeof(small_result));
 }
 
 void test_strong_typedef_is_decrementable_if_tagged_as_such() {
@@ -248,10 +270,14 @@ void test_strong_typedef_is_decrementable_if_tagged_as_such() {
     using ST_pre= jss::strong_typedef<
         struct Tag, int, jss::strong_typedef_properties::pre_decrementable>;
 
-    assert(sizeof(test_pre_decrementable<ST_pre>(0)) == sizeof(small_result));
-    assert(sizeof(test_pre_decrementable<ST_post>(0)) == sizeof(large_result));
-    assert(sizeof(test_post_decrementable<ST_pre>(0)) == sizeof(large_result));
-    assert(sizeof(test_post_decrementable<ST_post>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_pre_decrementable<ST_pre>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_pre_decrementable<ST_post>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_post_decrementable<ST_pre>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_post_decrementable<ST_post>(0)) == sizeof(small_result));
 
     ST_post post1(42);
     ST_post post2= post1--;
@@ -278,16 +304,19 @@ void test_by_default_strong_typedef_is_not_addable() {
 
     using ST= jss::strong_typedef<struct Tag, std::string>;
 
-    assert(sizeof(test_addable<ST, ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_addable<ST, std::string>(0)) == sizeof(large_result));
-    assert(sizeof(test_addable<ST, int>(0)) == sizeof(large_result));
-    assert(sizeof(test_addable<std::string, ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_addable<int, ST>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_addable<ST, ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_addable<ST, std::string>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_addable<ST, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_addable<std::string, ST>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_addable<int, ST>(0)) == sizeof(large_result));
     assert(
         sizeof(test_addable<std::string, std::string>(0)) ==
         sizeof(small_result));
-    assert(sizeof(test_addable<int, int>(0)) == sizeof(small_result));
-    assert(sizeof(test_addable<std::string, int>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_addable<int, int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_addable<std::string, int>(0)) == sizeof(large_result));
 }
 
 void test_strong_typedef_is_addable_if_tagged_as_such() {
@@ -295,11 +324,13 @@ void test_strong_typedef_is_addable_if_tagged_as_such() {
 
     using ST= jss::strong_typedef<
         struct Tag, std::string, jss::strong_typedef_properties::addable>;
-    assert(sizeof(test_addable<ST, ST>(0)) == sizeof(small_result));
-    assert(sizeof(test_addable<ST, std::string>(0)) == sizeof(small_result));
-    assert(sizeof(test_addable<ST, int>(0)) == sizeof(large_result));
-    assert(sizeof(test_addable<std::string, ST>(0)) == sizeof(small_result));
-    assert(sizeof(test_addable<int, ST>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_addable<ST, ST>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_addable<ST, std::string>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_addable<ST, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_addable<std::string, ST>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_addable<int, ST>(0)) == sizeof(large_result));
 
     ST st1("hello");
     ST st2= st1 + " world";
@@ -324,17 +355,20 @@ void test_by_default_strong_typedef_is_not_subtractable() {
 
     using ST= jss::strong_typedef<struct Tag, int>;
 
-    assert(sizeof(test_subtractable<ST, ST>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_subtractable<ST, ST>(0)) == sizeof(large_result));
     assert(
         sizeof(test_subtractable<ST, std::string>(0)) == sizeof(large_result));
-    assert(sizeof(test_subtractable<ST, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_subtractable<ST, int>(0)) == sizeof(large_result));
     assert(
         sizeof(test_subtractable<std::string, ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_subtractable<int, ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_subtractable<int, ST>(0)) == sizeof(large_result));
     assert(
         sizeof(test_subtractable<std::string, std::string>(0)) ==
         sizeof(large_result));
-    assert(sizeof(test_subtractable<int, int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_subtractable<int, int>(0)) == sizeof(small_result));
     assert(
         sizeof(test_subtractable<std::string, int>(0)) == sizeof(large_result));
 }
@@ -344,13 +378,15 @@ void test_strong_typedef_is_subtractable_if_tagged_as_such() {
 
     using ST= jss::strong_typedef<
         struct Tag, int, jss::strong_typedef_properties::subtractable>;
-    assert(sizeof(test_subtractable<ST, ST>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_subtractable<ST, ST>(0)) == sizeof(small_result));
     assert(
         sizeof(test_subtractable<ST, std::string>(0)) == sizeof(large_result));
-    assert(sizeof(test_subtractable<ST, int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_subtractable<ST, int>(0)) == sizeof(small_result));
     assert(
         sizeof(test_subtractable<std::string, ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_subtractable<int, ST>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_subtractable<int, ST>(0)) == sizeof(small_result));
 }
 
 template <typename T, typename U>
@@ -379,17 +415,20 @@ void test_by_default_strong_typedef_is_not_ordered() {
 
     using ST= jss::strong_typedef<struct Tag, int>;
 
-    assert(sizeof(test_ordered<ST, ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<ST, std::string>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<ST, int>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<int, ST>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_ordered<ST, ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_ordered<ST, std::string>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_ordered<ST, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_ordered<int, ST>(0)) == sizeof(large_result));
     assert(
         sizeof(test_ordered<std::string, std::string>(0)) ==
         sizeof(small_result));
-    assert(sizeof(test_ordered<int, int>(0)) == sizeof(small_result));
-    assert(sizeof(test_ordered<float, int>(0)) == sizeof(small_result));
-    assert(sizeof(test_ordered<std::string, int>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_ordered<int, int>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_ordered<float, int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_ordered<std::string, int>(0)) == sizeof(large_result));
 }
 
 void test_strong_typedef_is_ordered_if_tagged_as_such() {
@@ -399,12 +438,14 @@ void test_strong_typedef_is_ordered_if_tagged_as_such() {
         struct Tag, int, jss::strong_typedef_properties::ordered>;
     using ST2= jss::strong_typedef<
         struct Tag2, int, jss::strong_typedef_properties::ordered>;
-    assert(sizeof(test_ordered<ST, ST>(0)) == sizeof(small_result));
-    assert(sizeof(test_ordered<ST, ST2>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<ST, std::string>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<ST, int>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<int, ST>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_ordered<ST, ST>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_ordered<ST, ST2>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_ordered<ST, std::string>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_ordered<ST, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_ordered<int, ST>(0)) == sizeof(large_result));
 
     ST const st1(42);
     ST const st2(43);
@@ -427,23 +468,21 @@ void test_strong_typedef_is_mixed_ordered_if_tagged_as_such() {
     std::cout << __FUNCTION__ << std::endl;
 
     using ST= jss::strong_typedef<
-        struct Tag, int, jss::strong_typedef_properties::mixed_ordered>;
+        struct Tag, int, jss::strong_typedef_properties::mixed_ordered<int>>;
     using ST2= jss::strong_typedef<
-        struct Tag2, int, jss::strong_typedef_properties::mixed_ordered>;
-    assert(sizeof(test_ordered<ST, ST>(0)) == sizeof(small_result));
-    assert(sizeof(test_ordered<ST, ST2>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<ST, std::string>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<ST, int>(0)) == sizeof(small_result));
-    assert(sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_ordered<int, ST>(0)) == sizeof(small_result));
+        struct Tag2, int, jss::strong_typedef_properties::mixed_ordered<int>>;
+    static_assert(sizeof(test_ordered<ST, ST>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_ordered<ST, ST2>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_ordered<ST, std::string>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_ordered<ST, int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_ordered<std::string, ST>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_ordered<int, ST>(0)) == sizeof(small_result));
 
     ST constexpr st1(42);
     int const st2(43);
 
-    assert(!(st1 < st1));
-    assert(!(st1 > st1));
-    assert(st1 <= st1);
-    assert(st1 >= st1);
     assert(st1 < st2);
     assert(st1 <= st2);
     assert(!(st2 < st1));
@@ -467,9 +506,10 @@ void test_by_default_strong_typedef_is_not_hashable() {
 
     using ST= jss::strong_typedef<struct Tag, int>;
 
-    assert(sizeof(test_hashable<ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_hashable<std::string>(0)) == sizeof(small_result));
-    assert(sizeof(test_hashable<int>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_hashable<ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_hashable<std::string>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_hashable<int>(0)) == sizeof(small_result));
 }
 
 void test_strong_typedef_is_hashable_if_tagged_as_such() {
@@ -477,7 +517,7 @@ void test_strong_typedef_is_hashable_if_tagged_as_such() {
 
     using ST= jss::strong_typedef<
         struct Tag, std::string, jss::strong_typedef_properties::hashable>;
-    assert(sizeof(test_hashable<ST>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_hashable<ST>(0)) == sizeof(small_result));
 
     std::string s("hello");
     ST st(s);
@@ -498,9 +538,10 @@ void test_by_default_strong_typedef_is_not_streamable() {
 
     using ST= jss::strong_typedef<struct Tag, int>;
 
-    assert(sizeof(test_streamable<ST>(0)) == sizeof(large_result));
-    assert(sizeof(test_streamable<std::string>(0)) == sizeof(small_result));
-    assert(sizeof(test_streamable<int>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_streamable<ST>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_streamable<std::string>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_streamable<int>(0)) == sizeof(small_result));
 }
 
 void test_strong_typedef_is_streamable_if_tagged_as_such() {
@@ -523,10 +564,9 @@ void test_strong_typedef_is_streamable_if_tagged_as_such() {
 void test_properties_can_be_combined() {
     std::cout << __FUNCTION__ << std::endl;
     using ST= jss::strong_typedef<
-        struct Tag, std::string,
-        jss::strong_typedef_properties::streamable |
-            jss::strong_typedef_properties::hashable |
-            jss::strong_typedef_properties::comparable>;
+        struct Tag, std::string, jss::strong_typedef_properties::streamable,
+        jss::strong_typedef_properties::hashable,
+        jss::strong_typedef_properties::comparable>;
     static_assert(
         sizeof(test_streamable<ST>(0)) == sizeof(small_result),
         "Must be streamable when tagged");
