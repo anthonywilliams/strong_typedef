@@ -201,18 +201,17 @@ void test_strong_typedef_is_incrementable_if_tagged_as_such() {
     assert(sizeof(test_post_incrementable<ST_post>(0)) == sizeof(small_result));
 
     ST_post post1(42);
-    ST_post post2=post1++;
+    ST_post post2= post1++;
 
-    assert(post1.underlying_value()==43);
-    assert(post2.underlying_value()==42);
+    assert(post1.underlying_value() == 43);
+    assert(post2.underlying_value() == 42);
 
     ST_pre pre1(42);
-    ST_pre& pre2=++pre1;
+    ST_pre &pre2= ++pre1;
 
-    assert(&pre2==&pre1);
+    assert(&pre2 == &pre1);
 
-    assert(pre1.underlying_value()==43);
-    
+    assert(pre1.underlying_value() == 43);
 }
 
 template <typename T>
@@ -255,17 +254,17 @@ void test_strong_typedef_is_decrementable_if_tagged_as_such() {
     assert(sizeof(test_post_decrementable<ST_post>(0)) == sizeof(small_result));
 
     ST_post post1(42);
-    ST_post post2=post1--;
+    ST_post post2= post1--;
 
-    assert(post1.underlying_value()==41);
-    assert(post2.underlying_value()==42);
+    assert(post1.underlying_value() == 41);
+    assert(post2.underlying_value() == 42);
 
     ST_pre pre1(42);
-    ST_pre& pre2=--pre1;
+    ST_pre &pre2= --pre1;
 
-    assert(&pre2==&pre1);
+    assert(&pre2 == &pre1);
 
-    assert(pre1.underlying_value()==41);
+    assert(pre1.underlying_value() == 41);
 }
 
 template <typename T, typename U>
@@ -303,15 +302,15 @@ void test_strong_typedef_is_addable_if_tagged_as_such() {
     assert(sizeof(test_addable<int, ST>(0)) == sizeof(large_result));
 
     ST st1("hello");
-    ST st2=st1+" world";
-    assert(st1.underlying_value()=="hello");
-    assert(st2.underlying_value()=="hello world");
-    auto st3="goodbye"+st1;
-    assert(st1.underlying_value()=="hello");
-    assert(st3.underlying_value()=="goodbyehello");
-    auto st4=st1+st1;
-    assert(st1.underlying_value()=="hello");
-    assert(st4.underlying_value()=="hellohello");
+    ST st2= st1 + " world";
+    assert(st1.underlying_value() == "hello");
+    assert(st2.underlying_value() == "hello world");
+    auto st3= "goodbye" + st1;
+    assert(st1.underlying_value() == "hello");
+    assert(st3.underlying_value() == "goodbyehello");
+    auto st4= st1 + st1;
+    assert(st1.underlying_value() == "hello");
+    assert(st4.underlying_value() == "hellohello");
 }
 
 template <typename T, typename U>
@@ -410,18 +409,18 @@ void test_strong_typedef_is_ordered_if_tagged_as_such() {
     ST const st1(42);
     ST const st2(43);
 
-    assert(!(st1<st1));
-    assert(!(st1>st1));
-    assert(st1<=st1);
-    assert(st1>=st1);
-    assert(st1<st2);
-    assert(st1<=st2);
-    assert(!(st2<st1));
-    assert(!(st2<=st1));
-    assert(st2>st1);
-    assert(st2>=st1);
-    assert(!(st1>st2));
-    assert(!(st1>=st2));
+    assert(!(st1 < st1));
+    assert(!(st1 > st1));
+    assert(st1 <= st1);
+    assert(st1 >= st1);
+    assert(st1 < st2);
+    assert(st1 <= st2);
+    assert(!(st2 < st1));
+    assert(!(st2 <= st1));
+    assert(st2 > st1);
+    assert(st2 >= st1);
+    assert(!(st1 > st2));
+    assert(!(st1 >= st2));
 }
 
 void test_strong_typedef_is_mixed_ordered_if_tagged_as_such() {
@@ -441,18 +440,18 @@ void test_strong_typedef_is_mixed_ordered_if_tagged_as_such() {
     ST constexpr st1(42);
     int const st2(43);
 
-    assert(!(st1<st1));
-    assert(!(st1>st1));
-    assert(st1<=st1);
-    assert(st1>=st1);
-    assert(st1<st2);
-    assert(st1<=st2);
-    assert(!(st2<st1));
-    assert(!(st2<=st1));
-    assert(st2>st1);
-    assert(st2>=st1);
-    assert(!(st1>st2));
-    assert(!(st1>=st2));
+    assert(!(st1 < st1));
+    assert(!(st1 > st1));
+    assert(st1 <= st1);
+    assert(st1 >= st1);
+    assert(st1 < st2);
+    assert(st1 <= st2);
+    assert(!(st2 < st1));
+    assert(!(st2 <= st1));
+    assert(st2 > st1);
+    assert(st2 >= st1);
+    assert(!(st1 > st2));
+    assert(!(st1 >= st2));
 }
 
 template <typename T>
@@ -527,7 +526,7 @@ void test_properties_can_be_combined() {
         struct Tag, std::string,
         jss::strong_typedef_properties::streamable |
             jss::strong_typedef_properties::hashable |
-        jss::strong_typedef_properties::comparable>;
+            jss::strong_typedef_properties::comparable>;
     static_assert(
         sizeof(test_streamable<ST>(0)) == sizeof(small_result),
         "Must be streamable when tagged");
@@ -535,33 +534,31 @@ void test_properties_can_be_combined() {
         sizeof(test_hashable<ST>(0)) == sizeof(small_result),
         "Must be hashable when tagged");
     static_assert(
-        sizeof(test_ordered<ST,ST>(0)) == sizeof(small_result),
+        sizeof(test_ordered<ST, ST>(0)) == sizeof(small_result),
         "Must be ordered when tagged");
     static_assert(
         sizeof(test_equality<ST>(0)) == sizeof(small_result),
         "Must be equality-comparable when tagged");
 }
 
-void test_strong_typedef_is_default_constructible(){
+void test_strong_typedef_is_default_constructible() {
     std::cout << __FUNCTION__ << std::endl;
 
-    struct X{
+    struct X {
         int value;
 
-        X():
-            value(42){}
-        
+        X() : value(42) {}
     };
 
-    using ST=jss::strong_typedef<struct sometag,X>;
+    using ST= jss::strong_typedef<struct sometag, X>;
 
     ST st;
 
-    assert(static_cast<X>(st).value==42);
+    assert(static_cast<X>(st).value == 42);
 
-    jss::strong_typedef<struct footag,int> i;
+    jss::strong_typedef<struct footag, int> i;
 
-    assert(static_cast<int>(i)==0);
+    assert(static_cast<int>(i) == 0);
 }
 
 int main() {
