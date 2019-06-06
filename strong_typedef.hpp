@@ -487,6 +487,60 @@ namespace jss {
                   equality_comparable::template mixin<Derived, ValueType> {};
         };
 
+        struct self_multiplicable {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend constexpr Derived operator
+                    *(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
+                        std::declval<ValueType const &>() *
+                        std::declval<ValueType const &>())) {
+                    return Derived{lhs.underlying_value() *
+                                   rhs.underlying_value()};
+                }
+            };
+        };
+
+        template <typename Other> struct mixed_multiplicable {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend constexpr typename std::enable_if<
+                    !std::is_same<Other, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                std::declval<ValueType const &>() *
+                                std::declval<Other const &>()),
+                            ValueType>::value,
+                    Derived>::type
+                operator*(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() *
+                        std::declval<Other const &>())) {
+                    return Derived{lhs.underlying_value() * rhs};
+                }
+
+                friend constexpr typename std::enable_if<
+                    !std::is_same<Other, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                std::declval<Other const &>() *
+                                std::declval<ValueType const &>()),
+                            ValueType>::value,
+                    Derived>::type
+                operator*(Other const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<Other const &>() *
+                        std::declval<ValueType const &>())) {
+                    return Derived{lhs * rhs.underlying_value()};
+                }
+            };
+        };
+
+        struct multiplicable {
+            template <typename Derived, typename ValueType>
+            struct mixin
+                : self_multiplicable::template mixin<Derived, ValueType>,
+                  mixed_multiplicable<ValueType>::template mixin<
+                      Derived, ValueType> {};
+        };
+
     }
 }
 

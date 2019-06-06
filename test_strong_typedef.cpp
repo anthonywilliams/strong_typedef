@@ -622,6 +622,65 @@ void test_can_support_difference_with_other_type() {
     assert(res.underlying_value() == 54);
 }
 
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>() * std::declval<U &>()) != 0, small_result>::type
+test_multiplicable(int);
+template <typename T, typename U> large_result test_multiplicable(...);
+
+void test_self_multiplication() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    static_assert(
+        sizeof(test_multiplicable<int, int>(0)) == sizeof(small_result));
+
+    using ST1= jss::strong_typedef<struct Tag1, int>;
+    static_assert(
+        sizeof(test_multiplicable<ST1, ST1>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_multiplicable<ST1, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_multiplicable<int, ST1>(0)) == sizeof(large_result));
+
+    using ST2= jss::strong_typedef<
+        struct Tag2, int, jss::strong_typedef_properties::self_multiplicable>;
+    static_assert(
+        sizeof(test_multiplicable<ST2, ST2>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_multiplicable<ST2, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_multiplicable<int, ST2>(0)) == sizeof(large_result));
+
+    ST2 a(5);
+    ST2 b(6);
+    ST2 c= a * b;
+    assert(c.underlying_value() == 30);
+
+    using ST3= jss::strong_typedef<
+        struct Tag3, int,
+        jss::strong_typedef_properties::mixed_multiplicable<int>>;
+    static_assert(
+        sizeof(test_multiplicable<ST3, ST3>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_multiplicable<ST3, int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_multiplicable<int, ST3>(0)) == sizeof(small_result));
+
+    ST3 d(9);
+    int e(7);
+    ST3 f= d * e;
+    assert(f.underlying_value() == 63);
+
+    using ST4= jss::strong_typedef<
+        struct Tag4, int, jss::strong_typedef_properties::multiplicable>;
+    static_assert(
+        sizeof(test_multiplicable<ST4, ST4>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_multiplicable<ST4, int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_multiplicable<int, ST4>(0)) == sizeof(small_result));
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -650,4 +709,5 @@ int main() {
     test_properties_can_be_combined();
     test_strong_typedef_is_default_constructible();
     test_can_support_difference_with_other_type();
+    test_self_multiplication();
 }

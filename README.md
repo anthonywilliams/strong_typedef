@@ -211,6 +211,14 @@ properties are:
   `mixed_subtractable<ValueType>`
 * `jss::strong_typedef_properties::difference<T>` => Supports subtraction of two objects of the
   strong typedef (`st-st2`) where the result is convertible to `T`. The result is an object of type `T`.
+* `jss::strong_typedef_properties::self_multipicable` => Supports multiplication of two objects of the strong
+  typedef (`st*st2`) where the result is convertible to the underlying type. The result is a new
+  instance of the strong typedef.
+* `jss::strong_typedef_properties::mixed_multipicable<T>` => Supports multiplication of an object of the strong
+  typedef with another object of type `T` either way round (`st*value` or `value*st`) where the
+  result is convertible to the underlying type. The result is a new instance of the strong typedef.
+* `jss::strong_typedef_properties::multipicable` => Combines `self_multipicable` and
+  `mixed_multipicable<ValueType>`
 * `jss::strong_typedef_properties::ordered` => Supports ordering comparisons (`st<st2`, `st>st2`,
   `st<=st2`, `st>=st2`)
 * `jss::strong_typedef_properties::mixed_ordered<T>` => Supports ordering comparisons where only one
