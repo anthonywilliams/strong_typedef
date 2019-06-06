@@ -754,6 +754,26 @@ void test_ratio() {
     assert(res.underlying_value() == 25);
 }
 
+void test_constexpr_comparison() {
+    using ST= jss::strong_typedef<
+        struct Tag, int, jss::strong_typedef_properties::comparable>;
+
+    constexpr ST st1(42);
+    constexpr ST st2(43);
+    constexpr bool r1= st1 == st2;
+    constexpr bool r2= st1 < st2;
+    constexpr bool r3= st1 > st2;
+    constexpr bool r4= st1 <= st2;
+    constexpr bool r5= st1 >= st2;
+    constexpr bool r6= st1 != st2;
+    static_assert(!r1);
+    static_assert(r2);
+    static_assert(!r3);
+    static_assert(r4);
+    static_assert(!r5);
+    static_assert(r6);
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -787,4 +807,5 @@ int main() {
     test_self_division();
     test_mixed_division();
     test_ratio();
+    test_constexpr_comparison();
 }

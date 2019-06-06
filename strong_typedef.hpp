@@ -49,14 +49,14 @@ namespace jss {
     namespace strong_typedef_properties {
         struct equality_comparable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend bool
+                friend constexpr bool
                 operator==(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() ==
                         std::declval<ValueType const &>())) {
                     return lhs.underlying_value() == rhs.underlying_value();
                 }
-                friend bool
+                friend constexpr bool
                 operator!=(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() !=
@@ -308,28 +308,28 @@ namespace jss {
 
         struct ordered {
             template <typename Derived, typename ValueType> struct mixin {
-                friend bool
+                friend constexpr bool
                 operator<(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() <
                         std::declval<ValueType const &>())) {
                     return lhs.underlying_value() < rhs.underlying_value();
                 }
-                friend bool
+                friend constexpr bool
                 operator>(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() >
                         std::declval<ValueType const &>())) {
                     return lhs.underlying_value() > rhs.underlying_value();
                 }
-                friend bool
+                friend constexpr bool
                 operator<=(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() <=
                         std::declval<ValueType const &>())) {
                     return lhs.underlying_value() <= rhs.underlying_value();
                 }
-                friend bool
+                friend constexpr bool
                 operator>=(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() >=
