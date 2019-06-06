@@ -641,6 +641,10 @@ void test_self_multiplication() {
         sizeof(test_multiplicable<ST1, int>(0)) == sizeof(large_result));
     static_assert(
         sizeof(test_multiplicable<int, ST1>(0)) == sizeof(large_result));
+}
+
+void test_mixed_multiplication() {
+    std::cout << __FUNCTION__ << std::endl;
 
     using ST2= jss::strong_typedef<
         struct Tag2, int, jss::strong_typedef_properties::self_multiplicable>;
@@ -650,10 +654,6 @@ void test_self_multiplication() {
         sizeof(test_multiplicable<ST2, int>(0)) == sizeof(large_result));
     static_assert(
         sizeof(test_multiplicable<int, ST2>(0)) == sizeof(large_result));
-}
-
-void test_mixed_multiplication() {
-    std::cout << __FUNCTION__ << std::endl;
 
     ST2 a(5);
     ST2 b(6);
@@ -683,6 +683,55 @@ void test_mixed_multiplication() {
         sizeof(test_multiplicable<ST4, int>(0)) == sizeof(small_result));
     static_assert(
         sizeof(test_multiplicable<int, ST4>(0)) == sizeof(small_result));
+}
+
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>() / std::declval<U &>()) != 0, small_result>::type
+test_divisible(int);
+template <typename T, typename U> large_result test_divisible(...);
+
+void test_self_division() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    static_assert(sizeof(test_divisible<int, int>(0)) == sizeof(small_result));
+
+    using ST1= jss::strong_typedef<struct Tag1, int>;
+    static_assert(sizeof(test_divisible<ST1, ST1>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_divisible<ST1, int>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_divisible<int, ST1>(0)) == sizeof(large_result));
+}
+
+void test_mixed_division() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST2= jss::strong_typedef<
+        struct Tag2, int, jss::strong_typedef_properties::self_divisible>;
+    static_assert(sizeof(test_divisible<ST2, ST2>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_divisible<ST2, int>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_divisible<int, ST2>(0)) == sizeof(large_result));
+
+    ST2 a(42);
+    ST2 b(6);
+    ST2 c= a / b;
+    assert(c.underlying_value() == 7);
+
+    using ST3= jss::strong_typedef<
+        struct Tag3, int, jss::strong_typedef_properties::mixed_divisible<int>>;
+    static_assert(sizeof(test_divisible<ST3, ST3>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_divisible<ST3, int>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_divisible<int, ST3>(0)) == sizeof(small_result));
+
+    ST3 d(99);
+    int e(11);
+    ST3 f= d / e;
+    assert(f.underlying_value() == 9);
+
+    using ST4= jss::strong_typedef<
+        struct Tag4, int, jss::strong_typedef_properties::divisible>;
+    static_assert(sizeof(test_divisible<ST4, ST4>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_divisible<ST4, int>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_divisible<int, ST4>(0)) == sizeof(small_result));
 }
 
 int main() {
@@ -715,4 +764,6 @@ int main() {
     test_can_support_difference_with_other_type();
     test_self_multiplication();
     test_mixed_multiplication();
+    test_self_division();
+    test_mixed_division();
 }
