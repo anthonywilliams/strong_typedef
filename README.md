@@ -209,6 +209,8 @@ properties are:
   typedef.
 * `jss::strong_typedef_properties::subtractable` => Combines `self_subtractable` and
   `mixed_subtractable<ValueType>`
+* `jss::strong_typedef_properties::difference<T>` => Supports subtraction of two objects of the
+  strong typedef (`st-st2`) where the result is convertible to `T`. The result is an object of type `T`.
 * `jss::strong_typedef_properties::ordered` => Supports ordering comparisons (`st<st2`, `st>st2`,
   `st<=st2`, `st>=st2`)
 * `jss::strong_typedef_properties::mixed_ordered<T>` => Supports ordering comparisons where only one
