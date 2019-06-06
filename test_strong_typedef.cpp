@@ -755,6 +755,7 @@ void test_ratio() {
 }
 
 void test_constexpr_comparison() {
+    std::cout << __FUNCTION__ << std::endl;
     using ST= jss::strong_typedef<
         struct Tag, int, jss::strong_typedef_properties::comparable>;
 
@@ -772,6 +773,23 @@ void test_constexpr_comparison() {
     static_assert(r4);
     static_assert(!r5);
     static_assert(r6);
+}
+
+void test_constexpr_addition() {
+    std::cout << __FUNCTION__ << std::endl;
+    using ST= jss::strong_typedef<
+        struct Tag, int, jss::strong_typedef_properties::addable>;
+
+    constexpr ST st1(42);
+    constexpr ST st2(3);
+
+    constexpr ST st3= st1 + st2;
+    constexpr ST st4= st1 + 1;
+    constexpr ST st5= -1 + st1;
+
+    static_assert(st3.underlying_value() == 45);
+    static_assert(st4.underlying_value() == 43);
+    static_assert(st5.underlying_value() == 41);
 }
 
 int main() {
@@ -808,4 +826,5 @@ int main() {
     test_mixed_division();
     test_ratio();
     test_constexpr_comparison();
+    test_constexpr_addition();
 }
