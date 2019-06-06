@@ -595,6 +595,18 @@ namespace jss {
                                Derived, ValueType> {};
         };
 
+        template <typename RatioType> struct ratio {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend constexpr RatioType
+                operator/(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() /
+                        std::declval<ValueType const &>())) {
+                    return RatioType{lhs.underlying_value() /
+                                     rhs.underlying_value()};
+                }
+            };
+        };
     }
 }
 

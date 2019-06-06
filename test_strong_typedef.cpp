@@ -734,6 +734,26 @@ void test_mixed_division() {
     static_assert(sizeof(test_divisible<int, ST4>(0)) == sizeof(small_result));
 }
 
+void test_ratio() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ratio_type= jss::strong_typedef<struct difftag, int>;
+    using ST= jss::strong_typedef<
+        struct sometag, int, jss::strong_typedef_properties::ratio<ratio_type>>;
+
+    static_assert(sizeof(test_divisible<ST, ST>(0)) == sizeof(small_result));
+    static_assert(
+        std::is_same<
+            decltype(std::declval<ST const &>() / std::declval<ST const &>()),
+            ratio_type>::value);
+
+    ST st1(125);
+    ST st2(5);
+
+    ratio_type res= st1 / st2;
+    assert(res.underlying_value() == 25);
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -766,4 +786,5 @@ int main() {
     test_mixed_multiplication();
     test_self_division();
     test_mixed_division();
+    test_ratio();
 }

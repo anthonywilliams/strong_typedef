@@ -211,22 +211,26 @@ properties are:
   `mixed_subtractable<ValueType>`
 * `jss::strong_typedef_properties::difference<T>` => Supports subtraction of two objects of the
   strong typedef (`st-st2`) where the result is convertible to `T`. The result is an object of type `T`.
-* `jss::strong_typedef_properties::self_multiplicable` => Supports multiplication of two objects of the strong
-  typedef (`st*st2`) where the result is convertible to the underlying type. The result is a new
-  instance of the strong typedef.
-* `jss::strong_typedef_properties::mixed_multiplicable<T>` => Supports multiplication of an object of the strong
-  typedef with another object of type `T` either way round (`st*value` or `value*st`) where the
-  result is convertible to the underlying type. The result is a new instance of the strong typedef.
+* `jss::strong_typedef_properties::self_multiplicable` => Supports multiplication of two objects of
+  the strong typedef (`st*st2`) where the result is convertible to the underlying type. The result
+  is a new instance of the strong typedef.
+* `jss::strong_typedef_properties::mixed_multiplicable<T>` => Supports multiplication of an object
+  of the strong typedef with another object of type `T` either way round (`st*value` or `value*st`)
+  where the result is convertible to the underlying type. The result is a new instance of the strong
+  typedef.
 * `jss::strong_typedef_properties::multiplicable` => Combines `self_multiplicable` and
   `mixed_multiplicable<ValueType>`
-/ `jss::strong_typedef_properties::self_divisible` => Supports division of two objects of the strong
+* `jss::strong_typedef_properties::self_divisible` => Supports division of two objects of the strong
   typedef (`st/st2`) where the result is convertible to the underlying type. The result is a new
   instance of the strong typedef.
-/ `jss::strong_typedef_properties::mixed_divisible<T>` => Supports division of an object of the strong
-  typedef with another object of type `T` either way round (`st/value` or `value/st`) where the
-  result is convertible to the underlying type. The result is a new instance of the strong typedef.
-/ `jss::strong_typedef_properties::divisible` => Combines `self_divisible` and
+* `jss::strong_typedef_properties::mixed_divisible<T>` => Supports division of an object of the
+  strong typedef with another object of type `T` either way round (`st/value` or `value/st`) where
+  the result is convertible to the underlying type. The result is a new instance of the strong
+  typedef.
+* `jss::strong_typedef_properties::divisible` => Combines `self_divisible` and
   `mixed_divisible<ValueType>`
+* `jss::strong_typedef_properties::ratio<T>` => Supports division of two objects of the strong
+  typedef (`st/st2`) where the result is convertible to `T`. The result is an object of type `T`.
 * `jss::strong_typedef_properties::ordered` => Supports ordering comparisons (`st<st2`, `st>st2`,
   `st<=st2`, `st>=st2`)
 * `jss::strong_typedef_properties::mixed_ordered<T>` => Supports ordering comparisons where only one
