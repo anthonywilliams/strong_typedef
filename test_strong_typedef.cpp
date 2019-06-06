@@ -792,6 +792,23 @@ void test_constexpr_addition() {
     static_assert(st5.underlying_value() == 41);
 }
 
+void test_constexpr_subtraction() {
+    std::cout << __FUNCTION__ << std::endl;
+    using ST= jss::strong_typedef<
+        struct Tag, int, jss::strong_typedef_properties::subtractable>;
+
+    constexpr ST st1(42);
+    constexpr ST st2(3);
+
+    constexpr ST st3= st1 - st2;
+    constexpr ST st4= st1 - 1;
+    constexpr ST st5= -1 - st1;
+
+    static_assert(st3.underlying_value() == 39);
+    static_assert(st4.underlying_value() == 41);
+    static_assert(st5.underlying_value() == -43);
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -827,4 +844,5 @@ int main() {
     test_ratio();
     test_constexpr_comparison();
     test_constexpr_addition();
+    test_constexpr_subtraction();
 }

@@ -259,15 +259,11 @@ namespace jss {
         };
 
         template <typename Other> struct mixed_subtractable {
-            template <typename Derived, typename ValueType> struct mixin {
-                friend typename std::enable_if<
-                    !std::is_same<Other, Derived>::value &&
-                        std::is_convertible<
-                            decltype(
-                                std::declval<ValueType const &>() -
-                                std::declval<Other const &>()),
-                            ValueType>::value,
-                    Derived>::type
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
                 operator-(Derived const &lhs, Other const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() -
@@ -275,14 +271,7 @@ namespace jss {
                     return Derived{lhs.underlying_value() - rhs};
                 }
 
-                friend typename std::enable_if<
-                    !std::is_same<Other, Derived>::value &&
-                        std::is_convertible<
-                            decltype(
-                                std::declval<Other const &>() -
-                                std::declval<ValueType const &>()),
-                            ValueType>::value,
-                    Derived>::type
+                friend constexpr Derived
                 operator-(Other const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<Other const &>() -
@@ -292,9 +281,30 @@ namespace jss {
             };
         };
 
+        template <typename Other>
+        template <typename Derived, typename ValueType>
+        struct mixed_subtractable<Other>::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator-(Derived const &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>() -
+                std::declval<Other const &>())) {
+                return Derived{lhs.underlying_value() - rhs};
+            }
+
+            friend Derived
+            operator-(Other const &lhs, Derived const &rhs) noexcept(noexcept(
+                std::declval<Other const &>() -
+                std::declval<ValueType const &>())) {
+                return Derived{lhs - rhs.underlying_value()};
+            }
+        };
+
         struct self_subtractable {
-            template <typename Derived, typename ValueType> struct mixin {
-                friend Derived
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
                 operator-(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() -
@@ -303,6 +313,16 @@ namespace jss {
                                    rhs.underlying_value()};
                 }
             };
+        };
+
+        template <typename Derived, typename ValueType>
+        struct self_subtractable::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator-(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>() -
+                std::declval<ValueType const &>())) {
+                return Derived{lhs.underlying_value() - rhs.underlying_value()};
+            }
         };
 
         struct subtractable {
