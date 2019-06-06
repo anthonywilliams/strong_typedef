@@ -601,6 +601,27 @@ void test_strong_typedef_is_default_constructible() {
     assert(static_cast<int>(i) == 0);
 }
 
+void test_can_support_difference_with_other_type() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using difference_type= jss::strong_typedef<struct difftag, int>;
+    using ST= jss::strong_typedef<
+        struct sometag, int,
+        jss::strong_typedef_properties::difference<difference_type>>;
+
+    static_assert(sizeof(test_subtractable<ST, ST>(0)) == sizeof(small_result));
+    static_assert(
+        std::is_same<
+            decltype(std::declval<ST const &>() - std::declval<ST const &>()),
+            difference_type>::value);
+
+    ST st1(45);
+    ST st2(99);
+
+    difference_type res= st2 - st1;
+    assert(res.underlying_value() == 54);
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -628,4 +649,5 @@ int main() {
     test_strong_typedef_is_streamable_if_tagged_as_such();
     test_properties_can_be_combined();
     test_strong_typedef_is_default_constructible();
+    test_can_support_difference_with_other_type();
 }

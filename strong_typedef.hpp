@@ -295,6 +295,19 @@ namespace jss {
                                Derived, ValueType> {};
         };
 
+        template <typename DifferenceType> struct difference {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend constexpr DifferenceType
+                operator-(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() -
+                        std::declval<ValueType const &>())) {
+                    return DifferenceType{lhs.underlying_value() -
+                                          rhs.underlying_value()};
+                }
+            };
+        };
+
         struct ordered {
             template <typename Derived, typename ValueType> struct mixin {
                 friend constexpr bool
