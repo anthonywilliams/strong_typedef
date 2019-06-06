@@ -650,6 +650,10 @@ void test_self_multiplication() {
         sizeof(test_multiplicable<ST2, int>(0)) == sizeof(large_result));
     static_assert(
         sizeof(test_multiplicable<int, ST2>(0)) == sizeof(large_result));
+}
+
+void test_mixed_multiplication() {
+    std::cout << __FUNCTION__ << std::endl;
 
     ST2 a(5);
     ST2 b(6);
@@ -710,4 +714,5 @@ int main() {
     test_strong_typedef_is_default_constructible();
     test_can_support_difference_with_other_type();
     test_self_multiplication();
+    test_mixed_multiplication();
 }
