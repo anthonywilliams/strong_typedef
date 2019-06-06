@@ -1,4 +1,4 @@
-# `jss::strong_typedef<Tag,ValueType,Properties>`
+# `jss::strong_typedef <Tag, ValueType, Properties...>`
 
 [![Build Status](https://travis-ci.com/anthonywilliams/strong_typedef.svg?branch=master)](https://travis-ci.com/anthonywilliams/strong_typedef)
 
@@ -21,9 +21,9 @@ using SecondIndex=jss::strong_typedef<struct SecondTag,int>;
 types and are thus not inter-convertible. They also have no additional operations beyond retrieving
 the underlying value, as no properties are specified.
 
-The third template parameter (`Properties`) is an optional parameter that specifies the operations
-you wish the strong typedef to support. By default it is `jss::strong_typedef_properties::none`
-&mdash; no operations are supported. See [below](#properties) for a full list.
+The third template parameter (`Properties...`) is an optional parameter pack that specifies the
+operations you wish the strong typedef to support. By default it is empty, so no operations are
+supported. See [below](#properties) for a full list.
 
 ### Declaring Types
 
@@ -67,8 +67,8 @@ useful for class types such as `std::string`.
 using transaction_id=jss::strong_typedef<struct transaction_tag,std::string>;
 
 bool is_a_foo(transaction_id id){
-    auto& s=id.underlying_value();
-    return s.find("foo")!=s.end();
+    auto &s= id.underlying_value();
+    return s.find("foo") != s.end();
 }
 ~~~
 
@@ -95,13 +95,13 @@ be declared as follows:
 
 ~~~cplusplus
 using widget_id=jss::strong_typedef<struct widget_id_tag,unsigned long long,
-    jss::strong_typedef_properties::comparable |
-    jss::strong_typedef_properties::hashable |
+    jss::strong_typedef_properties::comparable,
+    jss::strong_typedef_properties::hashable,
     jss::strong_typedef_properties::streamable>;
 
 using froob_id=jss::strong_typedef<struct froob_id_tag,unsigned long long,
-    jss::strong_typedef_properties::comparable |
-    jss::strong_typedef_properties::hashable |
+    jss::strong_typedef_properties::comparable,
+    jss::strong_typedef_properties::hashable,
     jss::strong_typedef_properties::streamable>;
 ~~~
 
@@ -123,8 +123,8 @@ transaction ID:
 
 ~~~cplusplus
 using transaction_id=jss::strong_typedef<struct transaction_id_tag,std::string,
-    jss::strong_typedef_properties::comparable |
-    jss::strong_typedef_properties::hashable |
+    jss::strong_typedef_properties::comparable,
+    jss::strong_typedef_properties::hashable,
     jss::strong_typedef_properties::streamable>;
     
 transaction_id some_transaction("GBA283-HT9X");
@@ -143,13 +143,13 @@ can't be confused. You can also make the index types `incrementable` and
 
 ~~~cplusplus
 using channel_index=jss::strong_typedef<struct channel_index_tag,unsigned,
-    jss::strong_typedef_properties::comparable |
-    jss::strong_typedef_properties::incrementable |
+    jss::strong_typedef_properties::comparable,
+    jss::strong_typedef_properties::incrementable,
     jss::strong_typedef_properties::decrementable>;
     
 using data_index=jss::strong_typedef<struct data_index_tag,unsigned,
-    jss::strong_typedef_properties::comparable |
-    jss::strong_typedef_properties::incrementable |
+    jss::strong_typedef_properties::comparable,
+    jss::strong_typedef_properties::incrementable,
     jss::strong_typedef_properties::decrementable>;
     
 Data get_data_item(channel_index channel,data_index item);
@@ -158,10 +158,10 @@ void process_data(Data data);
 
 void foo(){
     channel_index const num_channels(99);
-    for(channel_index channel(0);channel<num_channels;++channel){
+    for(channel_index channel(0); channel < num_channels; ++channel) {
         data_index const num_data_items(get_num_items(channel));
-        for(data_index item(0);item<num_data_items;++item){
-            process_data(get_data_item(channel,item));
+        for(data_index item(0); item < num_data_items; ++item) {
+            process_data(get_data_item(channel, item));
         }
     }
 }
@@ -172,32 +172,58 @@ The compiler will complain if you pass the wrong parameters, or compare the
 
 ## <a name="properties"></a>Behaviour Properties
 
-The third template parameter (`Properties`) specifies behavioural properties for the new type. It
-must be one of the values of `jss::strong_typedef_properties`, or a value obtained by or-ing them
-together (e.g. `jss::strong_typedef_properties::hashable |
-jss::strong_typedef_properties::streamable | jss::strong_typedef_properties::comparable`). Each
-property adds some behaviour. The available properties are:
+The third template parameter (`Properties...`) specifies behavioural properties for the new type. It
+can be any combination of the types in the `jss::strong_typedef_properties` namespace,
+(e.g. `jss::strong_typedef_properties::hashable, jss::strong_typedef_properties::streamable,
+jss::strong_typedef_properties::comparable`). Each property adds some behaviour. The available
+properties are:
 
-* `jss::strong_typedef_properties::equality_comparable` => Can be compared for equality (`st==st2`) and
-  inequality (`st!=st2`)
+* `jss::strong_typedef_properties::equality_comparable` => Can be compared for equality (`st==st2`)
+  and inequality (`st!=st2`)
 * `jss::strong_typedef_properties::pre_incrementable` => Supports preincrement (`++st`)
 * `jss::strong_typedef_properties::post_incrementable` => Supports postincrement (`st++`)
 * `jss::strong_typedef_properties::pre_decrementable` => Supports predecrement (`--st`)
 * `jss::strong_typedef_properties::post_decrementable` => Supports postdecrement (`st--`)
-* `jss::strong_typedef_properties::addable` => Supports addition (`st+value`, `value+st`, `st+st2`)
-  where the result is convertible to the underlying type. The result is a new instance of the strong typedef.
-* `jss::strong_typedef_properties::subtractable` => Supports subtraction (`st-value`, `value-st`,
-  `st-st2`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef.
+* `jss::strong_typedef_properties::self_addable` => Supports addition of two objects of the strong
+  typedef (`st+st2`) where the result is convertible to the underlying type. The result is a new
+  instance of the strong typedef.
+* `jss::strong_typedef_properties::mixed_addable<T>` => Supports addition of an object of the strong
+  typedef with another object of type `T` either way round (`st+value` or `value+st`) where the
+  result is convertible to the underlying type. The result is a new instance of the strong typedef.
+* `jss::strong_typedef_properties::addable` => Combines `self_addable` and
+  `mixed_addable<ValueType>`
+* `jss::strong_typedef_properties::generic_mixed_addable` => Supports addition of an object of the
+  strong typedef with another object of any type either way round (`st+value` or `value+st`) where
+  the result is convertible to the underlying type. The result is a new instance of the strong
+  typedef.
+* `jss::strong_typedef_properties::self_subtractable` => Supports subtraction of two objects of the
+  strong typedef (`st-st2`) where the result is convertible to the underlying type. The result is a
+  new instance of the strong typedef.
+* `jss::strong_typedef_properties::mixed_subtractable<T>` => Supports subtraction of an object of
+  the strong typedef with another object of type `T` either way round (`st-value` or `value-st`)
+  where the result is convertible to the underlying type. The result is a new instance of the strong
+  typedef.
+* `jss::strong_typedef_properties::generic_mixed_subtractable` => Supports subtraction of an object
+  of the strong typedef with another object of any type either way round (`st-value` or `value-st`)
+  where the result is convertible to the underlying type. The result is a new instance of the strong
+  typedef.
+* `jss::strong_typedef_properties::subtractable` => Combines `self_subtractable` and
+  `mixed_subtractable<ValueType>`
 * `jss::strong_typedef_properties::ordered` => Supports ordering comparisons (`st<st2`, `st>st2`,
   `st<=st2`, `st>=st2`)
-* `jss::strong_typedef_properties::mixed_ordered` => Supports ordering comparisons where only one of
-  the values is a strong typedef
+* `jss::strong_typedef_properties::mixed_ordered<T>` => Supports ordering comparisons where only one
+  of the values is a strong typedef and the other is `T`
 * `jss::strong_typedef_properties::hashable` => Supports hashing with `std::hash`
-* `jss::strong_typedef_properties::streamable` => Can be written to a `std::ostream` with `operator<<`
-* `jss::strong_typedef_properties::incrementable` =>
-  `jss::strong_typedef_properties::pre_incrementable | jss::strong_typedef_properties::post_incrementable`
-* `jss::strong_typedef_properties::decrementable` => `jss::strong_typedef_properties::pre_decrementable | jss::strong_typedef_properties::post_decrementable`
-* `jss::strong_typedef_properties::comparable` => `jss::strong_typedef_properties::ordered | jss::strong_typedef_properties::equality_comparable`
+* `jss::strong_typedef_properties::streamable` => Can be written to a `std::ostream` with
+  `operator<<`
+* `jss::strong_typedef_properties::incrementable` => Combines
+  `jss::strong_typedef_properties::pre_incrementable` and
+  `jss::strong_typedef_properties::post_incrementable`
+* `jss::strong_typedef_properties::decrementable` => Combines
+  `jss::strong_typedef_properties::pre_decrementable` and
+  `jss::strong_typedef_properties::post_decrementable`
+* `jss::strong_typedef_properties::comparable` => Combines `jss::strong_typedef_properties::ordered`
+  and `jss::strong_typedef_properties::equality_comparable`
 
 ## License
 
@@ -226,4 +252,3 @@ This code is released under the [Boost Software License](https://www.boost.org/L
 > FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
 > ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 > DEALINGS IN THE SOFTWARE.
-
