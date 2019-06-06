@@ -225,6 +225,24 @@ properties are:
 * `jss::strong_typedef_properties::comparable` => Combines `jss::strong_typedef_properties::ordered`
   and `jss::strong_typedef_properties::equality_comparable`
 
+## Writing new properties
+
+You can write a new property by creating a class with the following structure:
+
+~~~cplusplus
+struct my_property{
+    template <typename Derived, typename ValueType> struct mixin {};
+};
+~~~
+
+Each strong typedef that uses the new property (e.g. `jss::strong_typedef<struct
+MyTag,int,my_property`) is a class derived from an instantiation of the `mixin` template. The
+`Derived` parameter is the type of the strong typedef class itself, and `ValueType` is the
+corresponding `ValueType` parameter.
+
+The mixin can therefore add members and/or friends, and can be used as a marker for
+`enable_if`-based overload resolution.
+
 ## License
 
 This code is released under the [Boost Software License](https://www.boost.org/LICENSE_1_0.txt):
