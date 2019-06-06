@@ -68,7 +68,7 @@ namespace jss {
 
         struct pre_incrementable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr Derived &operator++(Derived &self) noexcept(
+                friend Derived &operator++(Derived &self) noexcept(
                     noexcept(++std::declval<ValueType &>())) {
                     ++self.underlying_value();
                     return self;
@@ -78,9 +78,8 @@ namespace jss {
 
         struct post_incrementable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr Derived operator++(
-                    Derived &self,
-                    int) noexcept(noexcept(std::declval<ValueType &>()++)) {
+                friend Derived operator++(Derived &self, int) noexcept(
+                    noexcept(std::declval<ValueType &>()++)) {
                     return Derived{self.underlying_value()++};
                 }
             };
@@ -94,7 +93,7 @@ namespace jss {
 
         struct pre_decrementable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr Derived &operator--(Derived &self) noexcept(
+                friend Derived &operator--(Derived &self) noexcept(
                     noexcept(--std::declval<ValueType &>())) {
                     --self.underlying_value();
                     return self;
@@ -104,9 +103,8 @@ namespace jss {
 
         struct post_decrementable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr Derived operator--(
-                    Derived &self,
-                    int) noexcept(noexcept(std::declval<ValueType &>()--)) {
+                friend Derived operator--(Derived &self, int) noexcept(
+                    noexcept(std::declval<ValueType &>()--)) {
                     return Derived{self.underlying_value()--};
                 }
             };
@@ -121,7 +119,7 @@ namespace jss {
         struct generic_mixed_addable {
             template <typename Derived, typename ValueType> struct mixin {
                 template <typename Rhs>
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Rhs, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -136,7 +134,7 @@ namespace jss {
                 }
 
                 template <typename Lhs>
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Lhs, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -154,7 +152,7 @@ namespace jss {
 
         template <typename Other> struct mixed_addable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -169,7 +167,7 @@ namespace jss {
                     return Derived{lhs.underlying_value() + rhs};
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -188,7 +186,7 @@ namespace jss {
 
         struct self_addable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr Derived
+                friend Derived
                 operator+(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() +
@@ -210,7 +208,7 @@ namespace jss {
         struct generic_mixed_subtractable {
             template <typename Derived, typename ValueType> struct mixin {
                 template <typename Rhs>
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Rhs, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -225,7 +223,7 @@ namespace jss {
                 }
 
                 template <typename Lhs>
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Lhs, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -243,7 +241,7 @@ namespace jss {
 
         template <typename Other> struct mixed_subtractable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -258,7 +256,7 @@ namespace jss {
                     return Derived{lhs.underlying_value() - rhs};
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -277,7 +275,7 @@ namespace jss {
 
         struct self_subtractable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr Derived
+                friend Derived
                 operator-(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() -
@@ -297,7 +295,7 @@ namespace jss {
 
         template <typename DifferenceType> struct difference {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr DifferenceType
+                friend DifferenceType
                 operator-(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() -
@@ -310,28 +308,28 @@ namespace jss {
 
         struct ordered {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr bool
+                friend bool
                 operator<(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() <
                         std::declval<ValueType const &>())) {
                     return lhs.underlying_value() < rhs.underlying_value();
                 }
-                friend constexpr bool
+                friend bool
                 operator>(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() >
                         std::declval<ValueType const &>())) {
                     return lhs.underlying_value() > rhs.underlying_value();
                 }
-                friend constexpr bool
+                friend bool
                 operator<=(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() <=
                         std::declval<ValueType const &>())) {
                     return lhs.underlying_value() <= rhs.underlying_value();
                 }
-                friend constexpr bool
+                friend bool
                 operator>=(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() >=
@@ -343,7 +341,7 @@ namespace jss {
 
         template <typename Other> struct mixed_ordered {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -358,7 +356,7 @@ namespace jss {
                     return lhs.underlying_value() < rhs;
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -373,7 +371,7 @@ namespace jss {
                     return lhs < rhs.underlying_value();
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -388,7 +386,7 @@ namespace jss {
                     return lhs.underlying_value() > rhs;
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -403,7 +401,7 @@ namespace jss {
                     return lhs > rhs.underlying_value();
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -418,7 +416,7 @@ namespace jss {
                     return lhs.underlying_value() >= rhs;
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -433,7 +431,7 @@ namespace jss {
                     return lhs >= rhs.underlying_value();
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -448,7 +446,7 @@ namespace jss {
                     return lhs.underlying_value() <= rhs;
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -473,7 +471,7 @@ namespace jss {
 
         struct streamable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr std::ostream &
+                friend std::ostream &
                 operator<<(std::ostream &os, Derived const &st) {
                     return os << st.underlying_value();
                 }
@@ -489,7 +487,7 @@ namespace jss {
 
         struct self_multiplicable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr Derived operator
+                friend Derived operator
                     *(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
                         std::declval<ValueType const &>() *
                         std::declval<ValueType const &>())) {
@@ -501,7 +499,7 @@ namespace jss {
 
         template <typename Other> struct mixed_multiplicable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -516,7 +514,7 @@ namespace jss {
                     return Derived{lhs.underlying_value() * rhs};
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -543,7 +541,7 @@ namespace jss {
 
         struct self_divisible {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr Derived
+                friend Derived
                 operator/(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() /
@@ -556,7 +554,7 @@ namespace jss {
 
         template <typename Other> struct mixed_divisible {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -571,7 +569,7 @@ namespace jss {
                     return Derived{lhs.underlying_value() / rhs};
                 }
 
-                friend constexpr typename std::enable_if<
+                friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -597,7 +595,7 @@ namespace jss {
 
         template <typename RatioType> struct ratio {
             template <typename Derived, typename ValueType> struct mixin {
-                friend constexpr RatioType
+                friend RatioType
                 operator/(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() /
