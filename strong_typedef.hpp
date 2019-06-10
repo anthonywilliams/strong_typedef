@@ -843,6 +843,26 @@ namespace jss {
             }
         };
 
+        struct bitwise_not {
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived operator~(Derived const &lhs) noexcept(
+                    noexcept(~std::declval<ValueType const &>())) {
+                    return Derived{~lhs.underlying_value()};
+                }
+            };
+        };
+
+        template <typename Derived, typename ValueType>
+        struct bitwise_not::mixin<Derived, ValueType, false> {
+            friend Derived operator~(Derived const &lhs) noexcept(
+                noexcept(~std::declval<ValueType const &>())) {
+                return Derived{~lhs.underlying_value()};
+            }
+        };
+
     }
 }
 

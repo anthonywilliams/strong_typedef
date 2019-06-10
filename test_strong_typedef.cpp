@@ -974,6 +974,30 @@ void test_bitwise_xor() {
     static_assert(st6.underlying_value() == 0x7051ff);
 }
 
+template <typename T>
+typename std::enable_if<sizeof(~std::declval<T &>()) != 0, small_result>::type
+test_bitwise_not(int);
+template <typename T> large_result test_bitwise_not(...);
+
+void test_bitwise_not() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST_plain= jss::strong_typedef<struct Plain, int>;
+    using ST_self= jss::strong_typedef<
+        struct Self, int, jss::strong_typedef_properties::bitwise_not>;
+
+    static_assert(
+        sizeof(test_bitwise_not<ST_plain>(0)) == sizeof(large_result));
+
+    static_assert(sizeof(test_bitwise_not<ST_self>(0)) == sizeof(small_result));
+
+    constexpr ST_self st1{0x1876};
+
+    constexpr ST_self st2= ~st1;
+
+    static_assert(st2.underlying_value() == 0xffffe789);
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -1013,4 +1037,5 @@ int main() {
     test_bitwise_or();
     test_bitwise_and();
     test_bitwise_xor();
+    test_bitwise_not();
 }
