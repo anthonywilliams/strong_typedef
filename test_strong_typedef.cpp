@@ -863,6 +863,62 @@ void test_bitwise_or() {
     static_assert(st6.underlying_value() == 0x9a56ff);
 }
 
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>() & std::declval<U &>()) != 0, small_result>::type
+test_bitwise_and(int);
+template <typename T, typename U> large_result test_bitwise_and(...);
+
+void test_bitwise_and() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST_plain= jss::strong_typedef<struct Plain, int>;
+    using ST_self= jss::strong_typedef<
+        struct Self, int, jss::strong_typedef_properties::self_bitwise_and>;
+    using ST_mixed= jss::strong_typedef<
+        struct Mixed, int,
+        jss::strong_typedef_properties::mixed_bitwise_and<int>>;
+
+    static_assert(
+        sizeof(test_bitwise_and<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_and<ST_plain, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_and<int, ST_plain>(0)) == sizeof(large_result));
+
+    static_assert(
+        sizeof(test_bitwise_and<ST_self, ST_self>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_bitwise_and<ST_self, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_and<int, ST_self>(0)) == sizeof(large_result));
+
+    static_assert(
+        sizeof(test_bitwise_and<ST_mixed, ST_mixed>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_and<ST_mixed, int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_bitwise_and<int, ST_mixed>(0)) == sizeof(small_result));
+
+    constexpr ST_self st1{0x1876};
+    constexpr ST_self st2(0x9af4);
+
+    constexpr ST_self st3= st1 & st2;
+
+    static_assert(st3.underlying_value() == 0x1874);
+
+    constexpr ST_mixed st4{0xf3c5a5};
+    constexpr int i1(0x83945a);
+
+    constexpr ST_mixed st5= st4 & i1;
+    constexpr ST_mixed st6= i1 & st4;
+
+    static_assert(st5.underlying_value() == 0x838400);
+    static_assert(st6.underlying_value() == 0x838400);
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -900,4 +956,5 @@ int main() {
     test_constexpr_addition();
     test_constexpr_subtraction();
     test_bitwise_or();
+    test_bitwise_and();
 }
