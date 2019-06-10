@@ -863,6 +863,32 @@ namespace jss {
             }
         };
 
+        template <typename Other> struct bitwise_left_shift {
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
+                operator<<(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>()
+                        << std::declval<Other const &>())) {
+                    return Derived{lhs.underlying_value() << rhs};
+                }
+            };
+        };
+
+        template <typename Other>
+        template <typename Derived, typename ValueType>
+        struct bitwise_left_shift<Other>::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator<<(Derived const &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>()
+                << std::declval<Other const &>())) {
+                return Derived{lhs.underlying_value() << rhs};
+            }
+        };
+
     }
 }
 
