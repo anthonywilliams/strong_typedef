@@ -671,6 +671,47 @@ namespace jss {
             }
         };
 
+        template <typename Other> struct mixed_bitwise_or {
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
+                operator|(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() |
+                        std::declval<Other const &>())) {
+                    return Derived{lhs.underlying_value() | rhs};
+                }
+
+                friend constexpr Derived
+                operator|(Other const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<Other const &>() |
+                        std::declval<ValueType const &>())) {
+                    return Derived{lhs | rhs.underlying_value()};
+                }
+            };
+        };
+
+        template <typename Other>
+        template <typename Derived, typename ValueType>
+        struct mixed_bitwise_or<Other>::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator|(Derived const &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>() |
+                std::declval<Other const &>())) {
+                return Derived{lhs.underlying_value() | rhs};
+            }
+
+            friend Derived
+            operator|(Other const &lhs, Derived const &rhs) noexcept(noexcept(
+                std::declval<Other const &>() |
+                std::declval<ValueType const &>())) {
+                return Derived{lhs | rhs.underlying_value()};
+            }
+        };
+
     }
 }
 

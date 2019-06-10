@@ -821,6 +821,9 @@ void test_bitwise_or() {
     using ST_plain= jss::strong_typedef<struct Plain, int>;
     using ST_self= jss::strong_typedef<
         struct Self, int, jss::strong_typedef_properties::self_bitwise_or>;
+    using ST_mixed= jss::strong_typedef<
+        struct Mixed, int,
+        jss::strong_typedef_properties::mixed_bitwise_or<int>>;
 
     static_assert(
         sizeof(test_bitwise_or<ST_plain, ST_plain>(0)) == sizeof(large_result));
@@ -836,12 +839,28 @@ void test_bitwise_or() {
     static_assert(
         sizeof(test_bitwise_or<int, ST_self>(0)) == sizeof(large_result));
 
+    static_assert(
+        sizeof(test_bitwise_or<ST_mixed, ST_mixed>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_or<ST_mixed, int>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_bitwise_or<int, ST_mixed>(0)) == sizeof(small_result));
+
     constexpr ST_self st1{0x1842};
     constexpr ST_self st2(0x8214);
 
     constexpr ST_self st3= st1 | st2;
 
     static_assert(st3.underlying_value() == 0x9a56);
+
+    constexpr ST_mixed st4{0x1842a5};
+    constexpr int i1(0x82145a);
+
+    constexpr ST_mixed st5= st4 | i1;
+    constexpr ST_mixed st6= i1 | st4;
+
+    static_assert(st5.underlying_value() == 0x9a56ff);
+    static_assert(st6.underlying_value() == 0x9a56ff);
 }
 
 int main() {
