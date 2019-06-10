@@ -809,6 +809,41 @@ void test_constexpr_subtraction() {
     static_assert(st5.underlying_value() == -43);
 }
 
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>() | std::declval<U &>()) != 0, small_result>::type
+test_bitwise_or(int);
+template <typename T, typename U> large_result test_bitwise_or(...);
+
+void test_bitwise_or() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST_plain= jss::strong_typedef<struct Plain, int>;
+    using ST_self= jss::strong_typedef<
+        struct Self, int, jss::strong_typedef_properties::self_bitwise_or>;
+
+    static_assert(
+        sizeof(test_bitwise_or<ST_plain, ST_plain>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_or<ST_plain, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_or<int, ST_plain>(0)) == sizeof(large_result));
+
+    static_assert(
+        sizeof(test_bitwise_or<ST_self, ST_self>(0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_bitwise_or<ST_self, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_or<int, ST_self>(0)) == sizeof(large_result));
+
+    constexpr ST_self st1{0x1842};
+    constexpr ST_self st2(0x8214);
+
+    constexpr ST_self st3= st1 | st2;
+
+    static_assert(st3.underlying_value() == 0x9a56);
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -845,4 +880,5 @@ int main() {
     test_constexpr_comparison();
     test_constexpr_addition();
     test_constexpr_subtraction();
+    test_bitwise_or();
 }

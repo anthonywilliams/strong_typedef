@@ -644,6 +644,33 @@ namespace jss {
                 }
             };
         };
+
+        struct self_bitwise_or {
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
+                operator|(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() |
+                        std::declval<ValueType const &>())) {
+                    return Derived{lhs.underlying_value() |
+                                   rhs.underlying_value()};
+                }
+            };
+        };
+
+        template <typename Derived, typename ValueType>
+        struct self_bitwise_or::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator|(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>() |
+                std::declval<ValueType const &>())) {
+                return Derived{lhs.underlying_value() | rhs.underlying_value()};
+            }
+        };
+
     }
 }
 
