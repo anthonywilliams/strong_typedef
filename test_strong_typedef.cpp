@@ -1040,6 +1040,48 @@ void test_bitwise_left_shift() {
     static_assert(st5.underlying_value() == (st4.underlying_value() << i1));
 }
 
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>() >> std::declval<U &>()) != 0, small_result>::type
+test_bitwise_right_shift(int);
+template <typename T, typename U> large_result test_bitwise_right_shift(...);
+
+void test_bitwise_right_shift() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST_plain= jss::strong_typedef<struct Plain, int>;
+    using ST_mixed= jss::strong_typedef<
+        struct Mixed, int,
+        jss::strong_typedef_properties::bitwise_right_shift<int>>;
+
+    static_assert(
+        sizeof(test_bitwise_right_shift<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_right_shift<ST_plain, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_right_shift<int, ST_plain>(0)) ==
+        sizeof(large_result));
+
+    static_assert(
+        sizeof(test_bitwise_right_shift<ST_mixed, ST_mixed>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bitwise_right_shift<ST_mixed, int>(0)) ==
+        sizeof(small_result));
+    static_assert(
+        sizeof(test_bitwise_right_shift<int, ST_mixed>(0)) ==
+        sizeof(large_result));
+
+    constexpr ST_mixed st4{0x1842a5};
+    constexpr int i1(3);
+
+    constexpr ST_mixed st5= st4 >> i1;
+
+    static_assert(st5.underlying_value() == (st4.underlying_value() >> i1));
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -1081,4 +1123,5 @@ int main() {
     test_bitwise_xor();
     test_bitwise_not();
     test_bitwise_left_shift();
+    test_bitwise_right_shift();
 }
