@@ -583,9 +583,52 @@ namespace jss {
                       Derived, ValueType> {};
         };
 
+        template <typename Other> struct mixed_divisible {
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
+                operator/(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() /
+                        std::declval<Other const &>())) {
+                    return Derived{lhs.underlying_value() / rhs};
+                }
+
+                friend constexpr Derived
+                operator/(Other const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<Other const &>() /
+                        std::declval<ValueType const &>())) {
+                    return Derived{lhs / rhs.underlying_value()};
+                }
+            };
+        };
+        template <typename Other>
+        template <typename Derived, typename ValueType>
+        struct mixed_divisible<Other>::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator/(Derived const &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>() /
+                std::declval<Other const &>())) {
+                return Derived{lhs.underlying_value() / rhs};
+            }
+
+            friend Derived
+            operator/(Other const &lhs, Derived const &rhs) noexcept(noexcept(
+                std::declval<Other const &>() /
+                std::declval<ValueType const &>())) {
+                return Derived{lhs / rhs.underlying_value()};
+            }
+        };
+
         struct self_divisible {
-            template <typename Derived, typename ValueType> struct mixin {
-                friend Derived
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
                 operator/(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() /
@@ -596,45 +639,95 @@ namespace jss {
             };
         };
 
-        template <typename Other> struct mixed_divisible {
-            template <typename Derived, typename ValueType> struct mixin {
-                friend typename std::enable_if<
-                    !std::is_same<Other, Derived>::value &&
-                        std::is_convertible<
-                            decltype(
-                                std::declval<ValueType const &>() /
-                                std::declval<Other const &>()),
-                            ValueType>::value,
-                    Derived>::type
-                operator/(Derived const &lhs, Other const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() /
-                        std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() / rhs};
-                }
-
-                friend typename std::enable_if<
-                    !std::is_same<Other, Derived>::value &&
-                        std::is_convertible<
-                            decltype(
-                                std::declval<Other const &>() /
-                                std::declval<ValueType const &>()),
-                            ValueType>::value,
-                    Derived>::type
-                operator/(Other const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<Other const &>() /
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs / rhs.underlying_value()};
-                }
-            };
+        template <typename Derived, typename ValueType>
+        struct self_divisible::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator/(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>() /
+                std::declval<ValueType const &>())) {
+                return Derived{lhs.underlying_value() / rhs.underlying_value()};
+            }
         };
 
         struct divisible {
             template <typename Derived, typename ValueType>
-            struct mixin : self_divisible::template mixin<Derived, ValueType>,
+            struct mixin : self_divisible::mixin<Derived, ValueType>,
                            mixed_divisible<ValueType>::template mixin<
                                Derived, ValueType> {};
+        };
+
+        template <typename Other> struct mixed_modulus {
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
+                operator%(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() %
+                        std::declval<Other const &>())) {
+                    return Derived{lhs.underlying_value() % rhs};
+                }
+
+                friend constexpr Derived
+                operator%(Other const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<Other const &>() %
+                        std::declval<ValueType const &>())) {
+                    return Derived{lhs % rhs.underlying_value()};
+                }
+            };
+        };
+        template <typename Other>
+        template <typename Derived, typename ValueType>
+        struct mixed_modulus<Other>::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator%(Derived const &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>() %
+                std::declval<Other const &>())) {
+                return Derived{lhs.underlying_value() % rhs};
+            }
+
+            friend Derived
+            operator%(Other const &lhs, Derived const &rhs) noexcept(noexcept(
+                std::declval<Other const &>() %
+                std::declval<ValueType const &>())) {
+                return Derived{lhs % rhs.underlying_value()};
+            }
+        };
+
+        struct self_modulus {
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
+                operator%(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() %
+                        std::declval<ValueType const &>())) {
+                    return Derived{lhs.underlying_value() %
+                                   rhs.underlying_value()};
+                }
+            };
+        };
+
+        template <typename Derived, typename ValueType>
+        struct self_modulus::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator%(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>() %
+                std::declval<ValueType const &>())) {
+                return Derived{lhs.underlying_value() % rhs.underlying_value()};
+            }
+        };
+
+        struct modulus {
+            template <typename Derived, typename ValueType>
+            struct mixin
+                : self_modulus::mixin<Derived, ValueType>,
+                  mixed_modulus<ValueType>::template mixin<Derived, ValueType> {
+            };
         };
 
         template <typename RatioType> struct ratio {

@@ -734,6 +734,55 @@ void test_mixed_division() {
     static_assert(sizeof(test_divisible<int, ST4>(0)) == sizeof(small_result));
 }
 
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>() % std::declval<U &>()) != 0, small_result>::type
+test_modulus(int);
+template <typename T, typename U> large_result test_modulus(...);
+
+void test_self_modulus() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    static_assert(sizeof(test_modulus<int, int>(0)) == sizeof(small_result));
+
+    using ST1= jss::strong_typedef<struct Tag1, int>;
+    static_assert(sizeof(test_modulus<ST1, ST1>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_modulus<ST1, int>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_modulus<int, ST1>(0)) == sizeof(large_result));
+}
+
+void test_mixed_modulus() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST2= jss::strong_typedef<
+        struct Tag2, int, jss::strong_typedef_properties::self_modulus>;
+    static_assert(sizeof(test_modulus<ST2, ST2>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_modulus<ST2, int>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_modulus<int, ST2>(0)) == sizeof(large_result));
+
+    constexpr ST2 a(42);
+    constexpr ST2 b(5);
+    constexpr ST2 c= a % b;
+    static_assert(c.underlying_value() == 2);
+
+    using ST3= jss::strong_typedef<
+        struct Tag3, int, jss::strong_typedef_properties::mixed_modulus<int>>;
+    static_assert(sizeof(test_modulus<ST3, ST3>(0)) == sizeof(large_result));
+    static_assert(sizeof(test_modulus<ST3, int>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_modulus<int, ST3>(0)) == sizeof(small_result));
+
+    constexpr ST3 d(99);
+    constexpr int e(8);
+    constexpr ST3 f= d % e;
+    static_assert(f.underlying_value() == 3);
+
+    using ST4= jss::strong_typedef<
+        struct Tag4, int, jss::strong_typedef_properties::modulus>;
+    static_assert(sizeof(test_modulus<ST4, ST4>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_modulus<ST4, int>(0)) == sizeof(small_result));
+    static_assert(sizeof(test_modulus<int, ST4>(0)) == sizeof(small_result));
+}
+
 void test_ratio() {
     std::cout << __FUNCTION__ << std::endl;
 
@@ -1619,6 +1668,8 @@ int main() {
     test_mixed_multiplication();
     test_self_division();
     test_mixed_division();
+    test_self_modulus();
+    test_mixed_modulus();
     test_ratio();
     test_constexpr_comparison();
     test_constexpr_addition();
