@@ -1162,10 +1162,48 @@ namespace jss {
             };
 
             template <typename Derived, typename ValueType>
+            struct modulus_assign {
+                template <typename Rhs>
+                friend typename std::enable_if<
+                    std::is_base_of<
+                        typename mixed_modulus<typename std::remove_cv<
+                            typename std::remove_reference<Rhs>::type>::type>::
+                            template mixin<Derived, ValueType>,
+                        Derived>::value,
+                    Derived &>::type
+                operator%=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()%= std::declval<Rhs &&>())) {
+                    lhs.underlying_value()%= std::forward<Rhs>(rhs);
+                    return lhs;
+                }
+
+                template <typename Rhs>
+                friend typename std::enable_if<
+                    std::is_base_of<
+                        typename self_modulus::template mixin<
+                            Derived, ValueType>,
+                        typename std::enable_if<
+                            std::is_same<
+                                typename std::remove_cv<
+                                    typename std::remove_reference<Rhs>::type>::
+                                    type,
+                                Derived>::value,
+                            Derived>::type>::value,
+                    Derived &>::type
+                operator%=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()%=
+                    std::declval<Rhs &&>().underlying_value())) {
+                    lhs.underlying_value()%= rhs.underlying_value();
+                    return lhs;
+                }
+            };
+
+            template <typename Derived, typename ValueType>
             struct mixin : add_assign<Derived, ValueType>,
                            subtract_assign<Derived, ValueType>,
                            multiply_assign<Derived, ValueType>,
-                           divide_assign<Derived, ValueType> {};
+                           divide_assign<Derived, ValueType>,
+                           modulus_assign<Derived, ValueType> {};
         };
 
     }
