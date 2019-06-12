@@ -1240,6 +1240,12 @@ void test_compound_assignment() {
     using ST_compound_other_and= jss::strong_typedef<
         struct compound_other_and, int,
         jss::strong_typedef_properties::mixed_bitwise_and<int>>;
+    using ST_compound_left_shift= jss::strong_typedef<
+        struct compound_left_shift, int,
+        jss::strong_typedef_properties::bitwise_left_shift<int>>;
+    using ST_compound_right_shift= jss::strong_typedef<
+        struct compound_right_shift, int,
+        jss::strong_typedef_properties::bitwise_right_shift<int>>;
 
     static_assert(
         sizeof(test_plus_equals<ST_plain, int>(0)) == sizeof(large_result));
@@ -1761,6 +1767,22 @@ void test_compound_assignment() {
             0)) == sizeof(large_result));
     static_assert(
         sizeof(test_bit_or_equals<ST_compound_other_or, int>(0)) ==
+        sizeof(small_result));
+
+    static_assert(
+        sizeof(test_left_shift_equals<
+               ST_compound_left_shift, ST_compound_left_shift>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_left_shift_equals<ST_compound_left_shift, int>(0)) ==
+        sizeof(small_result));
+
+    static_assert(
+        sizeof(test_right_shift_equals<
+               ST_compound_right_shift, ST_compound_right_shift>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_right_shift_equals<ST_compound_right_shift, int>(0)) ==
         sizeof(small_result));
 
     ST_compound_add st1(42);

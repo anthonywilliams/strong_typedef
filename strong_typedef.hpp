@@ -553,6 +553,13 @@ namespace jss {
                         << std::declval<Other const &>())) {
                     return Derived{lhs.underlying_value() << rhs};
                 }
+                friend Derived &
+                operator<<=(Derived &lhs, Other const &rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()<<=
+                    std::declval<Other const &>())) {
+                    lhs.underlying_value()<<= rhs;
+                    return lhs;
+                }
             };
         };
 
@@ -564,6 +571,12 @@ namespace jss {
                 std::declval<ValueType const &>()
                 << std::declval<Other const &>())) {
                 return Derived{lhs.underlying_value() << rhs};
+            }
+            friend Derived &
+            operator<<=(Derived &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType &>()<<= std::declval<Other const &>())) {
+                lhs.underlying_value()<<= rhs;
+                return lhs;
             }
         };
 
@@ -579,6 +592,13 @@ namespace jss {
                         std::declval<Other const &>())) {
                     return Derived{lhs.underlying_value() >> rhs};
                 }
+                friend Derived &
+                operator>>=(Derived &lhs, Other const &rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()>>=
+                    std::declval<Other const &>())) {
+                    lhs.underlying_value()>>= rhs;
+                    return lhs;
+                }
             };
         };
 
@@ -590,6 +610,12 @@ namespace jss {
                 std::declval<ValueType const &>() >>
                 std::declval<Other const &>())) {
                 return Derived{lhs.underlying_value() >> rhs};
+            }
+            friend Derived &
+            operator>>=(Derived &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType &>()>>= std::declval<Other const &>())) {
+                lhs.underlying_value()>>= rhs;
+                return lhs;
             }
         };
 
