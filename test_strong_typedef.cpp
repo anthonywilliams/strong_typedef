@@ -1082,6 +1082,108 @@ void test_bitwise_right_shift() {
     static_assert(st5.underlying_value() == (st4.underlying_value() >> i1));
 }
 
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>()+= std::declval<U &>()) != 0, small_result>::type
+test_plus_equals(int);
+template <typename T, typename U> large_result test_plus_equals(...);
+
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>()-= std::declval<U &>()) != 0, small_result>::type
+test_minus_equals(int);
+template <typename T, typename U> large_result test_minus_equals(...);
+
+void test_complex_assignment() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST_plain= jss::strong_typedef<struct plain, int>;
+    using ST_add= jss::strong_typedef<
+        struct add, int, jss::strong_typedef_properties::addable>;
+    using ST_complex_plain= jss::strong_typedef<
+        struct complex_plain, int, jss::strong_typedef_properties::op_assign>;
+    using ST_complex_add= jss::strong_typedef<
+        struct complex_add, int, jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::addable>;
+    using ST_complex_sub= jss::strong_typedef<
+        struct complex_sub, int, jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::subtractable>;
+    using ST_complex_both= jss::strong_typedef<
+        struct complex_sub, int, jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::subtractable,
+        jss::strong_typedef_properties::addable>;
+
+    static_assert(
+        sizeof(test_plus_equals<ST_plain, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_plus_equals<ST_add, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_plus_equals<ST_complex_plain, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_plus_equals<ST_complex_add, int>(0)) ==
+        sizeof(small_result));
+    static_assert(
+        sizeof(test_plus_equals<ST_complex_sub, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_plus_equals<ST_complex_both, int>(0)) ==
+        sizeof(small_result));
+
+    static_assert(
+        sizeof(test_plus_equals<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_plus_equals<ST_add, ST_add>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_plus_equals<ST_complex_plain, ST_complex_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_plus_equals<ST_complex_add, ST_complex_add>(0)) ==
+        sizeof(small_result));
+    static_assert(
+        sizeof(test_plus_equals<ST_complex_sub, ST_complex_sub>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_plus_equals<ST_complex_both, ST_complex_both>(0)) ==
+        sizeof(small_result));
+
+    static_assert(
+        sizeof(test_minus_equals<ST_plain, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_minus_equals<ST_add, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_minus_equals<ST_complex_plain, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_minus_equals<ST_complex_add, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_minus_equals<ST_complex_sub, int>(0)) ==
+        sizeof(small_result));
+    static_assert(
+        sizeof(test_minus_equals<ST_complex_both, int>(0)) ==
+        sizeof(small_result));
+
+    static_assert(
+        sizeof(test_minus_equals<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_minus_equals<ST_add, ST_add>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_minus_equals<ST_complex_plain, ST_complex_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_minus_equals<ST_complex_add, ST_complex_add>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_minus_equals<ST_complex_sub, ST_complex_sub>(0)) ==
+        sizeof(small_result));
+    static_assert(
+        sizeof(test_minus_equals<ST_complex_both, ST_complex_both>(0)) ==
+        sizeof(small_result));
+}
+
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -1124,4 +1226,5 @@ int main() {
     test_bitwise_not();
     test_bitwise_left_shift();
     test_bitwise_right_shift();
+    test_complex_assignment();
 }
