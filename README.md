@@ -229,12 +229,54 @@ properties are:
   typedef.
 * `jss::strong_typedef_properties::divisible` => Combines `self_divisible` and
   `mixed_divisible<ValueType>`
+* `jss::strong_typedef_properties::self_modulus` => Supports modulus operations on two objects of the strong
+  typedef (`st%st2`) where the result is convertible to the underlying type. The result is a new
+  instance of the strong typedef.
+* `jss::strong_typedef_properties::mixed_modulus<T>` => Supports modulus operations on an object of
+  the strong typedef with another object of type `T` either way round (`st%value` or `value%st`)
+  where the result is convertible to the underlying type. The result is a new instance of the strong
+  typedef.
+* `jss::strong_typedef_properties::modulus` => Combines `self_modulus` and
+  `mixed_modulus<ValueType>`
 * `jss::strong_typedef_properties::ratio<T>` => Supports division of two objects of the strong
   typedef (`st/st2`) where the result is convertible to `T`. The result is an object of type `T`.
 * `jss::strong_typedef_properties::ordered` => Supports ordering comparisons (`st<st2`, `st>st2`,
   `st<=st2`, `st>=st2`)
 * `jss::strong_typedef_properties::mixed_ordered<T>` => Supports ordering comparisons where only one
   of the values is a strong typedef and the other is `T`
+* `jss::strong_typedef_properties::self_bitwise_or` => Supports bitwise or of two objects of the
+  strong typedef (`st|st2`) where the result is convertible to the underlying type. The result is a
+  new instance of the strong typedef.
+* `jss::strong_typedef_properties::mixed_bitwise_or<T>` => Supports bitwise or of an object of the
+  strong typedef with another object of type `T` either way round (`st|value` or `value|st`) where
+  the result is convertible to the underlying type. The result is a new instance of the strong
+  typedef.
+* `jss::strong_typedef_properties::bitwise_or` => Combines `self_bitwise_or` and
+  `mixed_bitwise_or<ValueType>`
+* `jss::strong_typedef_properties::self_bitwise_xor` => Supports bitwise xor of two objects of the
+  strong typedef (`st^st2`) where the result is convertible to the underlying type. The result is a
+  new instance of the strong typedef.
+* `jss::strong_typedef_properties::mixed_bitwise_xor<T>` => Supports bitwise xor of an object of the
+  strong typedef with another object of type `T` either way round (`st^value` or `value^st`) where
+  the result is convertible to the underlying type. The result is a new instance of the strong
+  typedef.
+* `jss::strong_typedef_properties::bitwise_xor` => Combines `self_bitwise_xor` and
+  `mixed_bitwise_xor<ValueType>`
+* `jss::strong_typedef_properties::self_bitwise_and` => Supports bitwise and of two objects of the
+  strong typedef (`st&st2`) where the result is convertible to the underlying type. The result is a
+  new instance of the strong typedef.
+* `jss::strong_typedef_properties::mixed_bitwise_and<T>` => Supports bitwise and of an object of the
+  strong typedef with another object of type `T` either way round (`st&value` or `value&st`) where
+  the result is convertible to the underlying type. The result is a new instance of the strong
+  typedef.
+* `jss::strong_typedef_properties::bitwise_and` => Combines `self_bitwise_and` and
+  `mixed_bitwise_and<ValueType>`
+* `jss::strong_typedef_properties::bitwise_left_shift<T>` => Supports bitwise left shift of an
+  object of the strong typedef by the value another object of type `T` (`st<<value`) where the
+  result is convertible to the underlying type. The result is a new instance of the strong typedef.
+* `jss::strong_typedef_properties::bitwise_right_shift<T>` => Supports bitwise right shift of an
+  object of the strong typedef by the value another object of type `T` (`st>>value`) where the
+  result is convertible to the underlying type. The result is a new instance of the strong typedef.
 * `jss::strong_typedef_properties::hashable` => Supports hashing with `std::hash`
 * `jss::strong_typedef_properties::streamable` => Can be written to a `std::ostream` with
   `operator<<`
@@ -246,6 +288,9 @@ properties are:
   `jss::strong_typedef_properties::post_decrementable`
 * `jss::strong_typedef_properties::comparable` => Combines `jss::strong_typedef_properties::ordered`
   and `jss::strong_typedef_properties::equality_comparable`
+  
+For operators where `st op rhs` yields an instance of the strong typedef, `st op= rhs` is also
+defined as `st.underlying_value() op= rhs`.
 
 ## Writing new properties
 
