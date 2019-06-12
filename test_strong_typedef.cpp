@@ -1236,6 +1236,29 @@ void test_compound_assignment() {
         struct compound_other_mod, int,
         jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::mixed_modulus<int>>;
+    using ST_compound_self_xor= jss::strong_typedef<
+        struct compound_self_xor, int,
+        jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::self_bitwise_xor>;
+    using ST_compound_other_xor= jss::strong_typedef<
+        struct compound_other_xor, int,
+        jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::mixed_bitwise_xor<int>>;
+    using ST_compound_self_or= jss::strong_typedef<
+        struct compound_self_or, int, jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::self_bitwise_or>;
+    using ST_compound_other_or= jss::strong_typedef<
+        struct compound_other_or, int,
+        jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::mixed_bitwise_or<int>>;
+    using ST_compound_self_and= jss::strong_typedef<
+        struct compound_self_and, int,
+        jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::self_bitwise_and>;
+    using ST_compound_other_and= jss::strong_typedef<
+        struct compound_other_and, int,
+        jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::mixed_bitwise_and<int>>;
 
     static_assert(
         sizeof(test_plus_equals<ST_plain, int>(0)) == sizeof(large_result));
@@ -1734,6 +1757,50 @@ void test_compound_assignment() {
         sizeof(
             test_bit_xor_equals<ST_compound_other_mod, ST_compound_other_mod>(
                 0)) == sizeof(large_result));
+
+    static_assert(
+        sizeof(test_bit_xor_equals<ST_compound_self_xor, ST_compound_self_xor>(
+            0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_bit_xor_equals<ST_compound_self_xor, int>(0)) ==
+        sizeof(large_result));
+
+    static_assert(
+        sizeof(
+            test_bit_xor_equals<ST_compound_other_xor, ST_compound_other_xor>(
+                0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_xor_equals<ST_compound_other_xor, int>(0)) ==
+        sizeof(small_result));
+
+    static_assert(
+        sizeof(test_bit_and_equals<ST_compound_self_and, ST_compound_self_and>(
+            0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_bit_and_equals<ST_compound_self_and, int>(0)) ==
+        sizeof(large_result));
+
+    static_assert(
+        sizeof(
+            test_bit_and_equals<ST_compound_other_and, ST_compound_other_and>(
+                0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_and_equals<ST_compound_other_and, int>(0)) ==
+        sizeof(small_result));
+
+    static_assert(
+        sizeof(test_bit_or_equals<ST_compound_self_or, ST_compound_self_or>(
+            0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_bit_or_equals<ST_compound_self_or, int>(0)) ==
+        sizeof(large_result));
+
+    static_assert(
+        sizeof(test_bit_or_equals<ST_compound_other_or, ST_compound_other_or>(
+            0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_or_equals<ST_compound_other_or, int>(0)) ==
+        sizeof(small_result));
 
     ST_compound_add st1(42);
     st1+= 9;

@@ -1198,12 +1198,123 @@ namespace jss {
                 }
             };
 
+            template <typename Derived, typename ValueType> struct xor_assign {
+                template <typename Rhs>
+                friend typename std::enable_if<
+                    std::is_base_of<
+                        typename mixed_bitwise_xor<typename std::remove_cv<
+                            typename std::remove_reference<Rhs>::type>::type>::
+                            template mixin<Derived, ValueType>,
+                        Derived>::value,
+                    Derived &>::type
+                operator^=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()^= std::declval<Rhs &&>())) {
+                    lhs.underlying_value()^= std::forward<Rhs>(rhs);
+                    return lhs;
+                }
+
+                template <typename Rhs>
+                friend typename std::enable_if<
+                    std::is_base_of<
+                        typename self_bitwise_xor::template mixin<
+                            Derived, ValueType>,
+                        typename std::enable_if<
+                            std::is_same<
+                                typename std::remove_cv<
+                                    typename std::remove_reference<Rhs>::type>::
+                                    type,
+                                Derived>::value,
+                            Derived>::type>::value,
+                    Derived &>::type
+                operator^=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()^=
+                    std::declval<Rhs &&>().underlying_value())) {
+                    lhs.underlying_value()^= rhs.underlying_value();
+                    return lhs;
+                }
+            };
+
+            template <typename Derived, typename ValueType> struct or_assign {
+                template <typename Rhs>
+                friend typename std::enable_if<
+                    std::is_base_of<
+                        typename mixed_bitwise_or<typename std::remove_cv<
+                            typename std::remove_reference<Rhs>::type>::type>::
+                            template mixin<Derived, ValueType>,
+                        Derived>::value,
+                    Derived &>::type
+                operator|=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()|= std::declval<Rhs &&>())) {
+                    lhs.underlying_value()|= std::forward<Rhs>(rhs);
+                    return lhs;
+                }
+
+                template <typename Rhs>
+                friend typename std::enable_if<
+                    std::is_base_of<
+                        typename self_bitwise_or::template mixin<
+                            Derived, ValueType>,
+                        typename std::enable_if<
+                            std::is_same<
+                                typename std::remove_cv<
+                                    typename std::remove_reference<Rhs>::type>::
+                                    type,
+                                Derived>::value,
+                            Derived>::type>::value,
+                    Derived &>::type
+                operator|=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()|=
+                    std::declval<Rhs &&>().underlying_value())) {
+                    lhs.underlying_value()|= rhs.underlying_value();
+                    return lhs;
+                }
+            };
+
+            template <typename Derived, typename ValueType> struct and_assign {
+                template <typename Rhs>
+                friend typename std::enable_if<
+                    std::is_base_of<
+                        typename mixed_bitwise_and<typename std::remove_cv<
+                            typename std::remove_reference<Rhs>::type>::type>::
+                            template mixin<Derived, ValueType>,
+                        Derived>::value,
+                    Derived &>::type
+                operator&=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()&= std::declval<Rhs &&>())) {
+                    lhs.underlying_value()&= std::forward<Rhs>(rhs);
+                    return lhs;
+                }
+
+                template <typename Rhs>
+                friend typename std::enable_if<
+                    std::is_base_of<
+                        typename self_bitwise_and::template mixin<
+                            Derived, ValueType>,
+                        typename std::enable_if<
+                            std::is_same<
+                                typename std::remove_cv<
+                                    typename std::remove_reference<Rhs>::type>::
+                                    type,
+                                Derived>::value,
+                            Derived>::type>::value,
+                    Derived &>::type
+                operator&=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()&=
+                    std::declval<Rhs &&>().underlying_value())) {
+                    lhs.underlying_value()&= rhs.underlying_value();
+                    return lhs;
+                }
+            };
+
             template <typename Derived, typename ValueType>
             struct mixin : add_assign<Derived, ValueType>,
                            subtract_assign<Derived, ValueType>,
                            multiply_assign<Derived, ValueType>,
                            divide_assign<Derived, ValueType>,
-                           modulus_assign<Derived, ValueType> {};
+                           modulus_assign<Derived, ValueType>,
+                           xor_assign<Derived, ValueType>,
+                           or_assign<Derived, ValueType>,
+                           and_assign<Derived, ValueType> {};
         };
 
     }
