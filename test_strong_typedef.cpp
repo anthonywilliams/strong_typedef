@@ -1094,40 +1094,96 @@ typename std::enable_if<
 test_minus_equals(int);
 template <typename T, typename U> large_result test_minus_equals(...);
 
-void test_complex_assignment() {
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>()*= std::declval<U &>()) != 0, small_result>::type
+test_multiply_equals(int);
+template <typename T, typename U> large_result test_multiply_equals(...);
+
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>()/= std::declval<U &>()) != 0, small_result>::type
+test_divide_equals(int);
+template <typename T, typename U> large_result test_divide_equals(...);
+
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>()<<= std::declval<U &>()) != 0, small_result>::type
+test_left_shift_equals(int);
+template <typename T, typename U> large_result test_left_shift_equals(...);
+
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>()>>= std::declval<U &>()) != 0, small_result>::type
+test_right_shift_equals(int);
+template <typename T, typename U> large_result test_right_shift_equals(...);
+
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>()%= std::declval<U &>()) != 0, small_result>::type
+test_mod_equals(int);
+template <typename T, typename U> large_result test_mod_equals(...);
+
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>()|= std::declval<U &>()) != 0, small_result>::type
+test_bit_or_equals(int);
+template <typename T, typename U> large_result test_bit_or_equals(...);
+
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>()&= std::declval<U &>()) != 0, small_result>::type
+test_bit_and_equals(int);
+template <typename T, typename U> large_result test_bit_and_equals(...);
+
+template <typename T, typename U>
+typename std::enable_if<
+    sizeof(std::declval<T &>()^= std::declval<U &>()) != 0, small_result>::type
+test_bit_xor_equals(int);
+template <typename T, typename U> large_result test_bit_xor_equals(...);
+
+void test_compound_assignment() {
     std::cout << __FUNCTION__ << std::endl;
 
     using ST_plain= jss::strong_typedef<struct plain, int>;
     using ST_add= jss::strong_typedef<
         struct add, int, jss::strong_typedef_properties::addable>;
-    using ST_complex_plain= jss::strong_typedef<
-        struct complex_plain, int, jss::strong_typedef_properties::op_assign>;
-    using ST_complex_add= jss::strong_typedef<
-        struct complex_add, int, jss::strong_typedef_properties::op_assign,
+    using ST_compound_plain= jss::strong_typedef<
+        struct compound_plain, int, jss::strong_typedef_properties::op_assign>;
+    using ST_compound_add= jss::strong_typedef<
+        struct compound_add, int, jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::addable>;
-    using ST_complex_sub= jss::strong_typedef<
-        struct complex_sub, int, jss::strong_typedef_properties::op_assign,
+    using ST_compound_sub= jss::strong_typedef<
+        struct compound_sub, int, jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::subtractable>;
-    using ST_complex_both= jss::strong_typedef<
-        struct complex_sub, int, jss::strong_typedef_properties::op_assign,
+    using ST_compound_both= jss::strong_typedef<
+        struct compound_sub, int, jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::subtractable,
         jss::strong_typedef_properties::addable>;
+    using ST_compound_self_mult= jss::strong_typedef<
+        struct compound_self_mult, int,
+        jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::self_multiplicable>;
+    using ST_compound_other_mult= jss::strong_typedef<
+        struct compound_other_mult, int,
+        jss::strong_typedef_properties::op_assign,
+        jss::strong_typedef_properties::mixed_multiplicable<int>>;
 
     static_assert(
         sizeof(test_plus_equals<ST_plain, int>(0)) == sizeof(large_result));
     static_assert(
         sizeof(test_plus_equals<ST_add, int>(0)) == sizeof(large_result));
     static_assert(
-        sizeof(test_plus_equals<ST_complex_plain, int>(0)) ==
+        sizeof(test_plus_equals<ST_compound_plain, int>(0)) ==
         sizeof(large_result));
     static_assert(
-        sizeof(test_plus_equals<ST_complex_add, int>(0)) ==
+        sizeof(test_plus_equals<ST_compound_add, int>(0)) ==
         sizeof(small_result));
     static_assert(
-        sizeof(test_plus_equals<ST_complex_sub, int>(0)) ==
+        sizeof(test_plus_equals<ST_compound_sub, int>(0)) ==
         sizeof(large_result));
     static_assert(
-        sizeof(test_plus_equals<ST_complex_both, int>(0)) ==
+        sizeof(test_plus_equals<ST_compound_both, int>(0)) ==
         sizeof(small_result));
 
     static_assert(
@@ -1136,16 +1192,16 @@ void test_complex_assignment() {
     static_assert(
         sizeof(test_plus_equals<ST_add, ST_add>(0)) == sizeof(large_result));
     static_assert(
-        sizeof(test_plus_equals<ST_complex_plain, ST_complex_plain>(0)) ==
+        sizeof(test_plus_equals<ST_compound_plain, ST_compound_plain>(0)) ==
         sizeof(large_result));
     static_assert(
-        sizeof(test_plus_equals<ST_complex_add, ST_complex_add>(0)) ==
+        sizeof(test_plus_equals<ST_compound_add, ST_compound_add>(0)) ==
         sizeof(small_result));
     static_assert(
-        sizeof(test_plus_equals<ST_complex_sub, ST_complex_sub>(0)) ==
+        sizeof(test_plus_equals<ST_compound_sub, ST_compound_sub>(0)) ==
         sizeof(large_result));
     static_assert(
-        sizeof(test_plus_equals<ST_complex_both, ST_complex_both>(0)) ==
+        sizeof(test_plus_equals<ST_compound_both, ST_compound_both>(0)) ==
         sizeof(small_result));
 
     static_assert(
@@ -1153,16 +1209,16 @@ void test_complex_assignment() {
     static_assert(
         sizeof(test_minus_equals<ST_add, int>(0)) == sizeof(large_result));
     static_assert(
-        sizeof(test_minus_equals<ST_complex_plain, int>(0)) ==
+        sizeof(test_minus_equals<ST_compound_plain, int>(0)) ==
         sizeof(large_result));
     static_assert(
-        sizeof(test_minus_equals<ST_complex_add, int>(0)) ==
+        sizeof(test_minus_equals<ST_compound_add, int>(0)) ==
         sizeof(large_result));
     static_assert(
-        sizeof(test_minus_equals<ST_complex_sub, int>(0)) ==
+        sizeof(test_minus_equals<ST_compound_sub, int>(0)) ==
         sizeof(small_result));
     static_assert(
-        sizeof(test_minus_equals<ST_complex_both, int>(0)) ==
+        sizeof(test_minus_equals<ST_compound_both, int>(0)) ==
         sizeof(small_result));
 
     static_assert(
@@ -1171,17 +1227,187 @@ void test_complex_assignment() {
     static_assert(
         sizeof(test_minus_equals<ST_add, ST_add>(0)) == sizeof(large_result));
     static_assert(
-        sizeof(test_minus_equals<ST_complex_plain, ST_complex_plain>(0)) ==
+        sizeof(test_minus_equals<ST_compound_plain, ST_compound_plain>(0)) ==
         sizeof(large_result));
     static_assert(
-        sizeof(test_minus_equals<ST_complex_add, ST_complex_add>(0)) ==
+        sizeof(test_minus_equals<ST_compound_add, ST_compound_add>(0)) ==
         sizeof(large_result));
     static_assert(
-        sizeof(test_minus_equals<ST_complex_sub, ST_complex_sub>(0)) ==
+        sizeof(test_minus_equals<ST_compound_sub, ST_compound_sub>(0)) ==
         sizeof(small_result));
     static_assert(
-        sizeof(test_minus_equals<ST_complex_both, ST_complex_both>(0)) ==
+        sizeof(test_minus_equals<ST_compound_both, ST_compound_both>(0)) ==
         sizeof(small_result));
+
+    static_assert(
+        sizeof(test_multiply_equals<ST_plain, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_divide_equals<ST_plain, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_mod_equals<ST_plain, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_left_shift_equals<ST_plain, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_right_shift_equals<ST_plain, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_or_equals<ST_plain, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_and_equals<ST_plain, int>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_xor_equals<ST_plain, int>(0)) == sizeof(large_result));
+
+    static_assert(
+        sizeof(test_multiply_equals<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_divide_equals<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_mod_equals<ST_plain, ST_plain>(0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_left_shift_equals<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_right_shift_equals<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_or_equals<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_and_equals<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_xor_equals<ST_plain, ST_plain>(0)) ==
+        sizeof(large_result));
+
+    static_assert(
+        sizeof(test_multiply_equals<ST_compound_self_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_divide_equals<ST_compound_self_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_mod_equals<ST_compound_self_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_left_shift_equals<ST_compound_self_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_right_shift_equals<ST_compound_self_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_or_equals<ST_compound_self_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_and_equals<ST_compound_self_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_xor_equals<ST_compound_self_mult, int>(0)) ==
+        sizeof(large_result));
+
+    static_assert(
+        sizeof(
+            test_multiply_equals<ST_compound_self_mult, ST_compound_self_mult>(
+                0)) == sizeof(small_result));
+    static_assert(
+        sizeof(test_divide_equals<ST_compound_self_mult, ST_compound_self_mult>(
+            0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_mod_equals<ST_compound_self_mult, ST_compound_self_mult>(
+            0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_left_shift_equals<
+               ST_compound_self_mult, ST_compound_self_mult>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_right_shift_equals<
+               ST_compound_self_mult, ST_compound_self_mult>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_or_equals<ST_compound_self_mult, ST_compound_self_mult>(
+            0)) == sizeof(large_result));
+    static_assert(
+        sizeof(
+            test_bit_and_equals<ST_compound_self_mult, ST_compound_self_mult>(
+                0)) == sizeof(large_result));
+    static_assert(
+        sizeof(
+            test_bit_xor_equals<ST_compound_self_mult, ST_compound_self_mult>(
+                0)) == sizeof(large_result));
+
+    static_assert(
+        sizeof(test_multiply_equals<ST_compound_other_mult, int>(0)) ==
+        sizeof(small_result));
+    static_assert(
+        sizeof(test_divide_equals<ST_compound_other_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_mod_equals<ST_compound_other_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_left_shift_equals<ST_compound_other_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_right_shift_equals<ST_compound_other_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_or_equals<ST_compound_other_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_and_equals<ST_compound_other_mult, int>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_bit_xor_equals<ST_compound_other_mult, int>(0)) ==
+        sizeof(large_result));
+
+    static_assert(
+        sizeof(test_multiply_equals<
+               ST_compound_other_mult, ST_compound_other_mult>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(
+            test_divide_equals<ST_compound_other_mult, ST_compound_other_mult>(
+                0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_mod_equals<ST_compound_other_mult, ST_compound_other_mult>(
+            0)) == sizeof(large_result));
+    static_assert(
+        sizeof(test_left_shift_equals<
+               ST_compound_other_mult, ST_compound_other_mult>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(test_right_shift_equals<
+               ST_compound_other_mult, ST_compound_other_mult>(0)) ==
+        sizeof(large_result));
+    static_assert(
+        sizeof(
+            test_bit_or_equals<ST_compound_other_mult, ST_compound_other_mult>(
+                0)) == sizeof(large_result));
+    static_assert(
+        sizeof(
+            test_bit_and_equals<ST_compound_other_mult, ST_compound_other_mult>(
+                0)) == sizeof(large_result));
+    static_assert(
+        sizeof(
+            test_bit_xor_equals<ST_compound_other_mult, ST_compound_other_mult>(
+                0)) == sizeof(large_result));
+
+    ST_compound_add st1(42);
+    st1+= 9;
+    assert(st1.underlying_value() == 51);
+    ST_compound_sub st2(42);
+    st2-= 3;
+    assert(st2.underlying_value() == 39);
+    ST_compound_self_mult st3(6);
+    ST_compound_self_mult st4(7);
+    st3*= st4;
+    assert(st3.underlying_value() == 42);
+
+    ST_compound_other_mult st5(9);
+    st5*= 6;
+    assert(st5.underlying_value() == 54);
 }
 
 int main() {
@@ -1226,5 +1452,5 @@ int main() {
     test_bitwise_not();
     test_bitwise_left_shift();
     test_bitwise_right_shift();
-    test_complex_assignment();
+    test_compound_assignment();
 }
