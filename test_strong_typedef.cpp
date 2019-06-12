@@ -1195,78 +1195,54 @@ void test_compound_assignment() {
     std::cout << __FUNCTION__ << std::endl;
 
     using ST_plain= jss::strong_typedef<struct plain, int>;
-    using ST_add= jss::strong_typedef<
-        struct add, int, jss::strong_typedef_properties::addable>;
-    using ST_compound_plain= jss::strong_typedef<
-        struct compound_plain, int, jss::strong_typedef_properties::op_assign>;
     using ST_compound_add= jss::strong_typedef<
-        struct compound_add, int, jss::strong_typedef_properties::op_assign,
-        jss::strong_typedef_properties::addable>;
+        struct compound_add, int, jss::strong_typedef_properties::addable>;
     using ST_compound_sub= jss::strong_typedef<
-        struct compound_sub, int, jss::strong_typedef_properties::op_assign,
-        jss::strong_typedef_properties::subtractable>;
+        struct compound_sub, int, jss::strong_typedef_properties::subtractable>;
     using ST_compound_both= jss::strong_typedef<
-        struct compound_sub, int, jss::strong_typedef_properties::op_assign,
-        jss::strong_typedef_properties::subtractable,
+        struct compound_sub, int, jss::strong_typedef_properties::subtractable,
         jss::strong_typedef_properties::addable>;
     using ST_compound_self_mult= jss::strong_typedef<
         struct compound_self_mult, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::self_multiplicable>;
     using ST_compound_other_mult= jss::strong_typedef<
         struct compound_other_mult, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::mixed_multiplicable<int>>;
     using ST_compound_self_divide= jss::strong_typedef<
         struct compound_self_divide, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::self_divisible>;
     using ST_compound_other_divide= jss::strong_typedef<
         struct compound_other_divide, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::mixed_divisible<int>>;
     using ST_compound_ratio= jss::strong_typedef<
-        struct compound_ratio, int, jss::strong_typedef_properties::op_assign,
-        jss::strong_typedef_properties::ratio<int>>;
+        struct compound_ratio, int, jss::strong_typedef_properties::ratio<int>>;
     using ST_compound_self_mod= jss::strong_typedef<
         struct compound_self_mod, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::self_modulus>;
     using ST_compound_other_mod= jss::strong_typedef<
         struct compound_other_mod, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::mixed_modulus<int>>;
     using ST_compound_self_xor= jss::strong_typedef<
         struct compound_self_xor, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::self_bitwise_xor>;
     using ST_compound_other_xor= jss::strong_typedef<
         struct compound_other_xor, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::mixed_bitwise_xor<int>>;
     using ST_compound_self_or= jss::strong_typedef<
-        struct compound_self_or, int, jss::strong_typedef_properties::op_assign,
+        struct compound_self_or, int,
         jss::strong_typedef_properties::self_bitwise_or>;
     using ST_compound_other_or= jss::strong_typedef<
         struct compound_other_or, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::mixed_bitwise_or<int>>;
     using ST_compound_self_and= jss::strong_typedef<
         struct compound_self_and, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::self_bitwise_and>;
     using ST_compound_other_and= jss::strong_typedef<
         struct compound_other_and, int,
-        jss::strong_typedef_properties::op_assign,
         jss::strong_typedef_properties::mixed_bitwise_and<int>>;
 
     static_assert(
         sizeof(test_plus_equals<ST_plain, int>(0)) == sizeof(large_result));
-    static_assert(
-        sizeof(test_plus_equals<ST_add, int>(0)) == sizeof(large_result));
-    static_assert(
-        sizeof(test_plus_equals<ST_compound_plain, int>(0)) ==
-        sizeof(large_result));
     static_assert(
         sizeof(test_plus_equals<ST_compound_add, int>(0)) ==
         sizeof(small_result));
@@ -1281,11 +1257,6 @@ void test_compound_assignment() {
         sizeof(test_plus_equals<ST_plain, ST_plain>(0)) ==
         sizeof(large_result));
     static_assert(
-        sizeof(test_plus_equals<ST_add, ST_add>(0)) == sizeof(large_result));
-    static_assert(
-        sizeof(test_plus_equals<ST_compound_plain, ST_compound_plain>(0)) ==
-        sizeof(large_result));
-    static_assert(
         sizeof(test_plus_equals<ST_compound_add, ST_compound_add>(0)) ==
         sizeof(small_result));
     static_assert(
@@ -1298,11 +1269,6 @@ void test_compound_assignment() {
     static_assert(
         sizeof(test_minus_equals<ST_plain, int>(0)) == sizeof(large_result));
     static_assert(
-        sizeof(test_minus_equals<ST_add, int>(0)) == sizeof(large_result));
-    static_assert(
-        sizeof(test_minus_equals<ST_compound_plain, int>(0)) ==
-        sizeof(large_result));
-    static_assert(
         sizeof(test_minus_equals<ST_compound_add, int>(0)) ==
         sizeof(large_result));
     static_assert(
@@ -1314,11 +1280,6 @@ void test_compound_assignment() {
 
     static_assert(
         sizeof(test_minus_equals<ST_plain, ST_plain>(0)) ==
-        sizeof(large_result));
-    static_assert(
-        sizeof(test_minus_equals<ST_add, ST_add>(0)) == sizeof(large_result));
-    static_assert(
-        sizeof(test_minus_equals<ST_compound_plain, ST_compound_plain>(0)) ==
         sizeof(large_result));
     static_assert(
         sizeof(test_minus_equals<ST_compound_add, ST_compound_add>(0)) ==

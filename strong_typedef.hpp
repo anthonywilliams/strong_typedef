@@ -154,80 +154,133 @@ namespace jss {
                 }
             };
         };
+#define JSS_COMPOUND_ASSIGN(op_symbol) op_symbol##=
 
-        template <typename Other> struct mixed_addable {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator+(Derived const &lhs, Other const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() +
-                        std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() + rhs};
-                }
+#define JSS_DEFINE_OP_MIXINS(name, op_symbol)                                  \
+    template <typename Other> struct mixed_##name {                            \
+        template <                                                             \
+            typename Derived, typename ValueType,                              \
+            bool= std::is_literal_type<ValueType>::value>                      \
+        struct mixin {                                                         \
+            friend constexpr Derived                                           \
+            operator op_symbol(Derived const &lhs, Other const &rhs) noexcept( \
+                noexcept(std::declval<ValueType const &>()                     \
+                             op_symbol std::declval<Other const &>())) {       \
+                return Derived{lhs.underlying_value() op_symbol rhs};          \
+            }                                                                  \
+                                                                               \
+            friend constexpr Derived                                           \
+            operator op_symbol(Other const &lhs, Derived const &rhs) noexcept( \
+                noexcept(std::declval<Other const &>()                         \
+                             op_symbol std::declval<ValueType const &>())) {   \
+                return Derived{lhs op_symbol rhs.underlying_value()};          \
+            }                                                                  \
+                                                                               \
+            friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(           \
+                Derived &lhs,                                                  \
+                Other const                                                    \
+                    &rhs) noexcept(noexcept(std::declval<ValueType &>()        \
+                                                JSS_COMPOUND_ASSIGN(op_symbol) \
+                                                    std::declval<              \
+                                                        Other const &>())) {   \
+                lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol) rhs;     \
+                return lhs;                                                    \
+            }                                                                  \
+        };                                                                     \
+    };                                                                         \
+    template <typename Other>                                                  \
+    template <typename Derived, typename ValueType>                            \
+    struct mixed_##name<Other>::mixin<Derived, ValueType, false> {             \
+        friend Derived                                                         \
+        operator op_symbol(Derived const &lhs, Other const &rhs) noexcept(     \
+            noexcept(std::declval<ValueType const &>()                         \
+                         op_symbol std::declval<Other const &>())) {           \
+            return Derived{lhs.underlying_value() op_symbol rhs};              \
+        }                                                                      \
+                                                                               \
+        friend Derived                                                         \
+        operator op_symbol(Other const &lhs, Derived const &rhs) noexcept(     \
+            noexcept(std::declval<Other const &>()                             \
+                         op_symbol std::declval<ValueType const &>())) {       \
+            return Derived{lhs op_symbol rhs.underlying_value()};              \
+        }                                                                      \
+                                                                               \
+        friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(               \
+            Derived &lhs,                                                      \
+            Other const                                                        \
+                &rhs) noexcept(noexcept(std::declval<ValueType &>()            \
+                                            JSS_COMPOUND_ASSIGN(op_symbol)     \
+                                                std::declval<                  \
+                                                    Other const &>())) {       \
+            lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol) rhs;         \
+            return lhs;                                                        \
+        }                                                                      \
+    };                                                                         \
+    struct self_##name {                                                       \
+        template <                                                             \
+            typename Derived, typename ValueType,                              \
+            bool= std::is_literal_type<ValueType>::value>                      \
+        struct mixin {                                                         \
+            friend constexpr Derived operator op_symbol(                       \
+                Derived const &lhs,                                            \
+                Derived const                                                  \
+                    &rhs) noexcept(noexcept(std::declval<ValueType const &>()  \
+                                                op_symbol std::declval<        \
+                                                    ValueType const &>())) {   \
+                return Derived{lhs.underlying_value()                          \
+                                   op_symbol rhs.underlying_value()};          \
+            }                                                                  \
+            friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(           \
+                Derived &lhs,                                                  \
+                Derived const                                                  \
+                    &rhs) noexcept(noexcept(std::declval<ValueType &>()        \
+                                                JSS_COMPOUND_ASSIGN(op_symbol) \
+                                                    std::declval<              \
+                                                        ValueType const        \
+                                                            &>())) {           \
+                lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol)          \
+                    rhs.underlying_value();                                    \
+                return lhs;                                                    \
+            }                                                                  \
+        };                                                                     \
+    };                                                                         \
+                                                                               \
+    template <typename Derived, typename ValueType>                            \
+    struct self_##name::mixin<Derived, ValueType, false> {                     \
+        friend Derived                                                         \
+        operator op_symbol(Derived const &lhs, Derived const &rhs) noexcept(   \
+            noexcept(std::declval<ValueType const &>()                         \
+                         op_symbol std::declval<ValueType const &>())) {       \
+            return Derived{lhs.underlying_value()                              \
+                               op_symbol rhs.underlying_value()};              \
+        }                                                                      \
+        friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(               \
+            Derived &lhs,                                                      \
+            Derived const                                                      \
+                &rhs) noexcept(noexcept(std::declval<ValueType &>()            \
+                                            JSS_COMPOUND_ASSIGN(op_symbol)     \
+                                                std::declval<                  \
+                                                    ValueType const &>())) {   \
+            lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol)              \
+                rhs.underlying_value();                                        \
+            return lhs;                                                        \
+        }                                                                      \
+    };                                                                         \
+    struct name {                                                              \
+        template <typename Derived, typename ValueType>                        \
+        struct mixin                                                           \
+            : self_##name::mixin<Derived, ValueType>,                          \
+              mixed_##name<ValueType>::template mixin<Derived, ValueType> {};  \
+    };
 
-                friend constexpr Derived
-                operator+(Other const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<Other const &>() +
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs + rhs.underlying_value()};
-                }
-            };
-        };
-        template <typename Other>
-        template <typename Derived, typename ValueType>
-        struct mixed_addable<Other>::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator+(Derived const &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() +
-                std::declval<Other const &>())) {
-                return Derived{lhs.underlying_value() + rhs};
-            }
-
-            friend Derived
-            operator+(Other const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<Other const &>() +
-                std::declval<ValueType const &>())) {
-                return Derived{lhs + rhs.underlying_value()};
-            }
-        };
-
-        struct self_addable {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator+(Derived const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() +
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs.underlying_value() +
-                                   rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Derived, typename ValueType>
-        struct self_addable::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator+(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() +
-                std::declval<ValueType const &>())) {
-                return Derived{lhs.underlying_value() + rhs.underlying_value()};
-            }
-        };
-
-        struct addable {
-            template <typename Derived, typename ValueType>
-            struct mixin
-                : self_addable::mixin<Derived, ValueType>,
-                  mixed_addable<ValueType>::template mixin<Derived, ValueType> {
-            };
-        };
+        JSS_DEFINE_OP_MIXINS(addable, +)
+        JSS_DEFINE_OP_MIXINS(subtractable, -)
+        JSS_DEFINE_OP_MIXINS(multiplicable, *)
+        JSS_DEFINE_OP_MIXINS(divisible, /)
+        JSS_DEFINE_OP_MIXINS(modulus, %)
+        JSS_DEFINE_OP_MIXINS(bitwise_or, |)
+        JSS_DEFINE_OP_MIXINS(bitwise_and, &)
+        JSS_DEFINE_OP_MIXINS(bitwise_xor, ^)
 
         struct generic_mixed_subtractable {
             template <typename Derived, typename ValueType> struct mixin {
@@ -261,80 +314,6 @@ namespace jss {
                     return Derived{lhs - rhs.underlying_value()};
                 }
             };
-        };
-
-        template <typename Other> struct mixed_subtractable {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator-(Derived const &lhs, Other const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() -
-                        std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() - rhs};
-                }
-
-                friend constexpr Derived
-                operator-(Other const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<Other const &>() -
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs - rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Other>
-        template <typename Derived, typename ValueType>
-        struct mixed_subtractable<Other>::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator-(Derived const &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() -
-                std::declval<Other const &>())) {
-                return Derived{lhs.underlying_value() - rhs};
-            }
-
-            friend Derived
-            operator-(Other const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<Other const &>() -
-                std::declval<ValueType const &>())) {
-                return Derived{lhs - rhs.underlying_value()};
-            }
-        };
-
-        struct self_subtractable {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator-(Derived const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() -
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs.underlying_value() -
-                                   rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Derived, typename ValueType>
-        struct self_subtractable::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator-(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() -
-                std::declval<ValueType const &>())) {
-                return Derived{lhs.underlying_value() - rhs.underlying_value()};
-            }
-        };
-
-        struct subtractable {
-            template <typename Derived, typename ValueType>
-            struct mixin : self_subtractable::mixin<Derived, ValueType>,
-                           mixed_subtractable<ValueType>::template mixin<
-                               Derived, ValueType> {};
         };
 
         template <typename DifferenceType> struct difference {
@@ -529,207 +508,6 @@ namespace jss {
                   equality_comparable::template mixin<Derived, ValueType> {};
         };
 
-        struct self_multiplicable {
-            template <typename Derived, typename ValueType> struct mixin {
-                friend Derived operator
-                    *(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
-                        std::declval<ValueType const &>() *
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs.underlying_value() *
-                                   rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Other> struct mixed_multiplicable {
-            template <typename Derived, typename ValueType> struct mixin {
-                friend typename std::enable_if<
-                    !std::is_same<Other, Derived>::value &&
-                        std::is_convertible<
-                            decltype(
-                                std::declval<ValueType const &>() *
-                                std::declval<Other const &>()),
-                            ValueType>::value,
-                    Derived>::type
-                operator*(Derived const &lhs, Other const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() *
-                        std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() * rhs};
-                }
-
-                friend typename std::enable_if<
-                    !std::is_same<Other, Derived>::value &&
-                        std::is_convertible<
-                            decltype(
-                                std::declval<Other const &>() *
-                                std::declval<ValueType const &>()),
-                            ValueType>::value,
-                    Derived>::type
-                operator*(Other const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<Other const &>() *
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs * rhs.underlying_value()};
-                }
-            };
-        };
-
-        struct multiplicable {
-            template <typename Derived, typename ValueType>
-            struct mixin
-                : self_multiplicable::template mixin<Derived, ValueType>,
-                  mixed_multiplicable<ValueType>::template mixin<
-                      Derived, ValueType> {};
-        };
-
-        template <typename Other> struct mixed_divisible {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator/(Derived const &lhs, Other const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() /
-                        std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() / rhs};
-                }
-
-                friend constexpr Derived
-                operator/(Other const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<Other const &>() /
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs / rhs.underlying_value()};
-                }
-            };
-        };
-        template <typename Other>
-        template <typename Derived, typename ValueType>
-        struct mixed_divisible<Other>::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator/(Derived const &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() /
-                std::declval<Other const &>())) {
-                return Derived{lhs.underlying_value() / rhs};
-            }
-
-            friend Derived
-            operator/(Other const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<Other const &>() /
-                std::declval<ValueType const &>())) {
-                return Derived{lhs / rhs.underlying_value()};
-            }
-        };
-
-        struct self_divisible {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator/(Derived const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() /
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs.underlying_value() /
-                                   rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Derived, typename ValueType>
-        struct self_divisible::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator/(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() /
-                std::declval<ValueType const &>())) {
-                return Derived{lhs.underlying_value() / rhs.underlying_value()};
-            }
-        };
-
-        struct divisible {
-            template <typename Derived, typename ValueType>
-            struct mixin : self_divisible::mixin<Derived, ValueType>,
-                           mixed_divisible<ValueType>::template mixin<
-                               Derived, ValueType> {};
-        };
-
-        template <typename Other> struct mixed_modulus {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator%(Derived const &lhs, Other const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() %
-                        std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() % rhs};
-                }
-
-                friend constexpr Derived
-                operator%(Other const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<Other const &>() %
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs % rhs.underlying_value()};
-                }
-            };
-        };
-        template <typename Other>
-        template <typename Derived, typename ValueType>
-        struct mixed_modulus<Other>::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator%(Derived const &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() %
-                std::declval<Other const &>())) {
-                return Derived{lhs.underlying_value() % rhs};
-            }
-
-            friend Derived
-            operator%(Other const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<Other const &>() %
-                std::declval<ValueType const &>())) {
-                return Derived{lhs % rhs.underlying_value()};
-            }
-        };
-
-        struct self_modulus {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator%(Derived const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() %
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs.underlying_value() %
-                                   rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Derived, typename ValueType>
-        struct self_modulus::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator%(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() %
-                std::declval<ValueType const &>())) {
-                return Derived{lhs.underlying_value() % rhs.underlying_value()};
-            }
-        };
-
-        struct modulus {
-            template <typename Derived, typename ValueType>
-            struct mixin
-                : self_modulus::mixin<Derived, ValueType>,
-                  mixed_modulus<ValueType>::template mixin<Derived, ValueType> {
-            };
-        };
-
         template <typename RatioType> struct ratio {
             template <typename Derived, typename ValueType> struct mixin {
                 friend RatioType
@@ -741,204 +519,6 @@ namespace jss {
                                      rhs.underlying_value()};
                 }
             };
-        };
-
-        struct self_bitwise_or {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator|(Derived const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() |
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs.underlying_value() |
-                                   rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Derived, typename ValueType>
-        struct self_bitwise_or::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator|(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() |
-                std::declval<ValueType const &>())) {
-                return Derived{lhs.underlying_value() | rhs.underlying_value()};
-            }
-        };
-
-        template <typename Other> struct mixed_bitwise_or {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator|(Derived const &lhs, Other const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() |
-                        std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() | rhs};
-                }
-
-                friend constexpr Derived
-                operator|(Other const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<Other const &>() |
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs | rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Other>
-        template <typename Derived, typename ValueType>
-        struct mixed_bitwise_or<Other>::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator|(Derived const &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() |
-                std::declval<Other const &>())) {
-                return Derived{lhs.underlying_value() | rhs};
-            }
-
-            friend Derived
-            operator|(Other const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<Other const &>() |
-                std::declval<ValueType const &>())) {
-                return Derived{lhs | rhs.underlying_value()};
-            }
-        };
-
-        struct self_bitwise_and {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived operator
-                    &(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
-                        std::declval<ValueType const &>() &
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs.underlying_value() &
-                                   rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Derived, typename ValueType>
-        struct self_bitwise_and::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator&(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() &
-                std::declval<ValueType const &>())) {
-                return Derived{lhs.underlying_value() & rhs.underlying_value()};
-            }
-        };
-
-        template <typename Other> struct mixed_bitwise_and {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived operator
-                    &(Derived const &lhs, Other const &rhs) noexcept(noexcept(
-                        std::declval<ValueType const &>() &
-                        std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() & rhs};
-                }
-
-                friend constexpr Derived operator
-                    &(Other const &lhs, Derived const &rhs) noexcept(noexcept(
-                        std::declval<Other const &>() &
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs & rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Other>
-        template <typename Derived, typename ValueType>
-        struct mixed_bitwise_and<Other>::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator&(Derived const &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() &
-                std::declval<Other const &>())) {
-                return Derived{lhs.underlying_value() & rhs};
-            }
-
-            friend Derived
-            operator&(Other const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<Other const &>() &
-                std::declval<ValueType const &>())) {
-                return Derived{lhs & rhs.underlying_value()};
-            }
-        };
-
-        struct self_bitwise_xor {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator^(Derived const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() ^
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs.underlying_value() ^
-                                   rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Derived, typename ValueType>
-        struct self_bitwise_xor::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator^(Derived const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() ^
-                std::declval<ValueType const &>())) {
-                return Derived{lhs.underlying_value() ^ rhs.underlying_value()};
-            }
-        };
-
-        template <typename Other> struct mixed_bitwise_xor {
-            template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
-            struct mixin {
-                friend constexpr Derived
-                operator^(Derived const &lhs, Other const &rhs) noexcept(
-                    noexcept(
-                        std::declval<ValueType const &>() ^
-                        std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() ^ rhs};
-                }
-
-                friend constexpr Derived
-                operator^(Other const &lhs, Derived const &rhs) noexcept(
-                    noexcept(
-                        std::declval<Other const &>() ^
-                        std::declval<ValueType const &>())) {
-                    return Derived{lhs ^ rhs.underlying_value()};
-                }
-            };
-        };
-
-        template <typename Other>
-        template <typename Derived, typename ValueType>
-        struct mixed_bitwise_xor<Other>::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator^(Derived const &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() ^
-                std::declval<Other const &>())) {
-                return Derived{lhs.underlying_value() ^ rhs};
-            }
-
-            friend Derived
-            operator^(Other const &lhs, Derived const &rhs) noexcept(noexcept(
-                std::declval<Other const &>() ^
-                std::declval<ValueType const &>())) {
-                return Derived{lhs ^ rhs.underlying_value()};
-            }
         };
 
         struct bitwise_not {
@@ -1011,310 +591,6 @@ namespace jss {
                 std::declval<Other const &>())) {
                 return Derived{lhs.underlying_value() >> rhs};
             }
-        };
-
-        struct op_assign {
-            template <typename Derived, typename ValueType> struct add_assign {
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename mixed_addable<typename std::remove_cv<
-                            typename std::remove_reference<Rhs>::type>::type>::
-                            template mixin<Derived, ValueType>,
-                        Derived>::value,
-                    Derived &>::type
-                operator+=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()+= std::declval<Rhs &&>())) {
-                    lhs.underlying_value()+= std::forward<Rhs>(rhs);
-                    return lhs;
-                }
-
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename self_addable::template mixin<
-                            Derived, ValueType>,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<
-                                    typename std::remove_reference<Rhs>::type>::
-                                    type,
-                                Derived>::value,
-                            Derived>::type>::value,
-                    Derived &>::type
-                operator+=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()+=
-                    std::declval<Rhs &&>().underlying_value())) {
-                    lhs.underlying_value()+= rhs.underlying_value();
-                    return lhs;
-                }
-            };
-
-            template <typename Derived, typename ValueType>
-            struct subtract_assign {
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename mixed_subtractable<typename std::remove_cv<
-                            typename std::remove_reference<Rhs>::type>::type>::
-                            template mixin<Derived, ValueType>,
-                        Derived>::value,
-                    Derived &>::type
-                operator-=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()-= std::declval<Rhs &&>())) {
-                    lhs.underlying_value()-= std::forward<Rhs>(rhs);
-                    return lhs;
-                }
-
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename self_subtractable::template mixin<
-                            Derived, ValueType>,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<
-                                    typename std::remove_reference<Rhs>::type>::
-                                    type,
-                                Derived>::value,
-                            Derived>::type>::value,
-                    Derived &>::type
-                operator-=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()-=
-                    std::declval<Rhs &&>().underlying_value())) {
-                    lhs.underlying_value()-= rhs.underlying_value();
-                    return lhs;
-                }
-            };
-
-            template <typename Derived, typename ValueType>
-            struct multiply_assign {
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename mixed_multiplicable<typename std::remove_cv<
-                            typename std::remove_reference<Rhs>::type>::type>::
-                            template mixin<Derived, ValueType>,
-                        Derived>::value,
-                    Derived &>::type
-                operator*=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()*= std::declval<Rhs &&>())) {
-                    lhs.underlying_value()*= std::forward<Rhs>(rhs);
-                    return lhs;
-                }
-
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename self_multiplicable::template mixin<
-                            Derived, ValueType>,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<
-                                    typename std::remove_reference<Rhs>::type>::
-                                    type,
-                                Derived>::value,
-                            Derived>::type>::value,
-                    Derived &>::type
-                operator*=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()*=
-                    std::declval<Rhs &&>().underlying_value())) {
-                    lhs.underlying_value()*= rhs.underlying_value();
-                    return lhs;
-                }
-            };
-
-            template <typename Derived, typename ValueType>
-            struct divide_assign {
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename mixed_divisible<typename std::remove_cv<
-                            typename std::remove_reference<Rhs>::type>::type>::
-                            template mixin<Derived, ValueType>,
-                        Derived>::value,
-                    Derived &>::type
-                operator/=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()/= std::declval<Rhs &&>())) {
-                    lhs.underlying_value()/= std::forward<Rhs>(rhs);
-                    return lhs;
-                }
-
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename self_divisible::template mixin<
-                            Derived, ValueType>,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<
-                                    typename std::remove_reference<Rhs>::type>::
-                                    type,
-                                Derived>::value,
-                            Derived>::type>::value,
-                    Derived &>::type
-                operator/=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()/=
-                    std::declval<Rhs &&>().underlying_value())) {
-                    lhs.underlying_value()/= rhs.underlying_value();
-                    return lhs;
-                }
-            };
-
-            template <typename Derived, typename ValueType>
-            struct modulus_assign {
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename mixed_modulus<typename std::remove_cv<
-                            typename std::remove_reference<Rhs>::type>::type>::
-                            template mixin<Derived, ValueType>,
-                        Derived>::value,
-                    Derived &>::type
-                operator%=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()%= std::declval<Rhs &&>())) {
-                    lhs.underlying_value()%= std::forward<Rhs>(rhs);
-                    return lhs;
-                }
-
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename self_modulus::template mixin<
-                            Derived, ValueType>,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<
-                                    typename std::remove_reference<Rhs>::type>::
-                                    type,
-                                Derived>::value,
-                            Derived>::type>::value,
-                    Derived &>::type
-                operator%=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()%=
-                    std::declval<Rhs &&>().underlying_value())) {
-                    lhs.underlying_value()%= rhs.underlying_value();
-                    return lhs;
-                }
-            };
-
-            template <typename Derived, typename ValueType> struct xor_assign {
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename mixed_bitwise_xor<typename std::remove_cv<
-                            typename std::remove_reference<Rhs>::type>::type>::
-                            template mixin<Derived, ValueType>,
-                        Derived>::value,
-                    Derived &>::type
-                operator^=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()^= std::declval<Rhs &&>())) {
-                    lhs.underlying_value()^= std::forward<Rhs>(rhs);
-                    return lhs;
-                }
-
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename self_bitwise_xor::template mixin<
-                            Derived, ValueType>,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<
-                                    typename std::remove_reference<Rhs>::type>::
-                                    type,
-                                Derived>::value,
-                            Derived>::type>::value,
-                    Derived &>::type
-                operator^=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()^=
-                    std::declval<Rhs &&>().underlying_value())) {
-                    lhs.underlying_value()^= rhs.underlying_value();
-                    return lhs;
-                }
-            };
-
-            template <typename Derived, typename ValueType> struct or_assign {
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename mixed_bitwise_or<typename std::remove_cv<
-                            typename std::remove_reference<Rhs>::type>::type>::
-                            template mixin<Derived, ValueType>,
-                        Derived>::value,
-                    Derived &>::type
-                operator|=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()|= std::declval<Rhs &&>())) {
-                    lhs.underlying_value()|= std::forward<Rhs>(rhs);
-                    return lhs;
-                }
-
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename self_bitwise_or::template mixin<
-                            Derived, ValueType>,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<
-                                    typename std::remove_reference<Rhs>::type>::
-                                    type,
-                                Derived>::value,
-                            Derived>::type>::value,
-                    Derived &>::type
-                operator|=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()|=
-                    std::declval<Rhs &&>().underlying_value())) {
-                    lhs.underlying_value()|= rhs.underlying_value();
-                    return lhs;
-                }
-            };
-
-            template <typename Derived, typename ValueType> struct and_assign {
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename mixed_bitwise_and<typename std::remove_cv<
-                            typename std::remove_reference<Rhs>::type>::type>::
-                            template mixin<Derived, ValueType>,
-                        Derived>::value,
-                    Derived &>::type
-                operator&=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()&= std::declval<Rhs &&>())) {
-                    lhs.underlying_value()&= std::forward<Rhs>(rhs);
-                    return lhs;
-                }
-
-                template <typename Rhs>
-                friend typename std::enable_if<
-                    std::is_base_of<
-                        typename self_bitwise_and::template mixin<
-                            Derived, ValueType>,
-                        typename std::enable_if<
-                            std::is_same<
-                                typename std::remove_cv<
-                                    typename std::remove_reference<Rhs>::type>::
-                                    type,
-                                Derived>::value,
-                            Derived>::type>::value,
-                    Derived &>::type
-                operator&=(Derived &lhs, Rhs &&rhs) noexcept(noexcept(
-                    std::declval<ValueType &>()&=
-                    std::declval<Rhs &&>().underlying_value())) {
-                    lhs.underlying_value()&= rhs.underlying_value();
-                    return lhs;
-                }
-            };
-
-            template <typename Derived, typename ValueType>
-            struct mixin : add_assign<Derived, ValueType>,
-                           subtract_assign<Derived, ValueType>,
-                           multiply_assign<Derived, ValueType>,
-                           divide_assign<Derived, ValueType>,
-                           modulus_assign<Derived, ValueType>,
-                           xor_assign<Derived, ValueType>,
-                           or_assign<Derived, ValueType>,
-                           and_assign<Derived, ValueType> {};
         };
 
     }
