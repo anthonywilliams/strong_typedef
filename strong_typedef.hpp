@@ -40,6 +40,10 @@ namespace jss {
             ValueType value;
         };
 
+        template <typename T> constexpr T &&underlying_value(T &&t) {
+            return std::forward<T>(t);
+        }
+
     }
 
     template <typename Tag, typename ValueType, typename... Properties>
@@ -50,6 +54,29 @@ namespace jss {
             strong_typedef<Tag, ValueType, Properties...>, ValueType,
             Properties...>::strong_typedef_base;
     };
+
+    namespace detail {
+        template <typename Tag, typename ValueType, typename... Properties>
+        constexpr ValueType &underlying_value(
+            jss::strong_typedef<Tag, ValueType, Properties...> &t) {
+            return t.underlying_value();
+        }
+        template <typename Tag, typename ValueType, typename... Properties>
+        constexpr ValueType const &underlying_value(
+            jss::strong_typedef<Tag, ValueType, Properties...> const &t) {
+            return t.underlying_value();
+        }
+        template <typename Tag, typename ValueType, typename... Properties>
+        constexpr ValueType &&underlying_value(
+            jss::strong_typedef<Tag, ValueType, Properties...> &&t) {
+            return std::move(t.underlying_value());
+        }
+        template <typename Tag, typename ValueType, typename... Properties>
+        constexpr ValueType const &&underlying_value(
+            jss::strong_typedef<Tag, ValueType, Properties...> const &&t) {
+            return std::move(t.underlying_value());
+        }
+    }
 
     namespace strong_typedef_properties {
         struct equality_comparable {
@@ -129,13 +156,15 @@ namespace jss {
                         std::is_convertible<
                             decltype(
                                 std::declval<ValueType const &>() +
-                                std::declval<Rhs const &>()),
+                                detail::underlying_value(
+                                    std::declval<Rhs const &>())),
                             ValueType>::value,
                     Derived>::type
                 operator+(Derived const &lhs, Rhs const &rhs) noexcept(noexcept(
                     std::declval<ValueType const &>() +
-                    std::declval<Rhs const &>())) {
-                    return Derived{lhs.underlying_value() + rhs};
+                    detail::underlying_value(std::declval<Rhs const &>()))) {
+                    return Derived{lhs.underlying_value() +
+                                   detail::underlying_value(rhs)};
                 }
 
                 template <typename Lhs>
@@ -143,14 +172,16 @@ namespace jss {
                     !std::is_same<Lhs, Derived>::value &&
                         std::is_convertible<
                             decltype(
-                                std::declval<Lhs const &>() +
+                                detail::underlying_value(
+                                    std::declval<Lhs const &>()) +
                                 std::declval<ValueType const &>()),
                             ValueType>::value,
                     Derived>::type
                 operator+(Lhs const &lhs, Derived const &rhs) noexcept(noexcept(
-                    std::declval<Lhs const &>() +
+                    detail::underlying_value(std::declval<Lhs const &>()) +
                     std::declval<ValueType const &>())) {
-                    return Derived{lhs + rhs.underlying_value()};
+                    return Derived{detail::underlying_value(lhs) +
+                                   rhs.underlying_value()};
                 }
             };
         };
@@ -165,15 +196,19 @@ namespace jss {
             friend constexpr Derived                                           \
             operator op_symbol(Derived const &lhs, Other const &rhs) noexcept( \
                 noexcept(std::declval<ValueType const &>()                     \
-                             op_symbol std::declval<Other const &>())) {       \
-                return Derived{lhs.underlying_value() op_symbol rhs};          \
+                             op_symbol detail::underlying_value(               \
+                                 std::declval<Other const &>()))) {            \
+                return Derived{lhs.underlying_value()                          \
+                                   op_symbol detail::underlying_value(rhs)};   \
             }                                                                  \
                                                                                \
             friend constexpr Derived                                           \
             operator op_symbol(Other const &lhs, Derived const &rhs) noexcept( \
-                noexcept(std::declval<Other const &>()                         \
-                             op_symbol std::declval<ValueType const &>())) {   \
-                return Derived{lhs op_symbol rhs.underlying_value()};          \
+                noexcept(                                                      \
+                    detail::underlying_value(std::declval<Other const &>())    \
+                        op_symbol std::declval<ValueType const &>())) {        \
+                return Derived{detail::underlying_value(lhs)                   \
+                                   op_symbol rhs.underlying_value()};          \
             }                                                                  \
                                                                                \
             friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(           \
@@ -181,9 +216,12 @@ namespace jss {
                 Other const                                                    \
                     &rhs) noexcept(noexcept(std::declval<ValueType &>()        \
                                                 JSS_COMPOUND_ASSIGN(op_symbol) \
-                                                    std::declval<              \
-                                                        Other const &>())) {   \
-                lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol) rhs;     \
+                                                    detail::underlying_value(  \
+                                                        std::declval<          \
+                                                            Other const        \
+                                                                &>()))) {      \
+                lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol)          \
+                    detail::underlying_value(rhs);                             \
                 return lhs;                                                    \
             }                                                                  \
         };                                                                     \
@@ -194,15 +232,18 @@ namespace jss {
         friend Derived                                                         \
         operator op_symbol(Derived const &lhs, Other const &rhs) noexcept(     \
             noexcept(std::declval<ValueType const &>()                         \
-                         op_symbol std::declval<Other const &>())) {           \
-            return Derived{lhs.underlying_value() op_symbol rhs};              \
+                         op_symbol detail::underlying_value(                   \
+                             std::declval<Other const &>()))) {                \
+            return Derived{lhs.underlying_value()                              \
+                               op_symbol detail::underlying_value(rhs)};       \
         }                                                                      \
                                                                                \
         friend Derived                                                         \
         operator op_symbol(Other const &lhs, Derived const &rhs) noexcept(     \
-            noexcept(std::declval<Other const &>()                             \
+            noexcept(detail::underlying_value(std::declval<Other const &>())   \
                          op_symbol std::declval<ValueType const &>())) {       \
-            return Derived{lhs op_symbol rhs.underlying_value()};              \
+            return Derived{detail::underlying_value(lhs)                       \
+                               op_symbol rhs.underlying_value()};              \
         }                                                                      \
                                                                                \
         friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(               \
@@ -210,9 +251,11 @@ namespace jss {
             Other const                                                        \
                 &rhs) noexcept(noexcept(std::declval<ValueType &>()            \
                                             JSS_COMPOUND_ASSIGN(op_symbol)     \
-                                                std::declval<                  \
-                                                    Other const &>())) {       \
-            lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol) rhs;         \
+                                                detail::underlying_value(      \
+                                                    std::declval<              \
+                                                        Other const &>()))) {  \
+            lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol)              \
+                detail::underlying_value(rhs);                                 \
             return lhs;                                                        \
         }                                                                      \
     };                                                                         \
@@ -290,13 +333,15 @@ namespace jss {
                         std::is_convertible<
                             decltype(
                                 std::declval<ValueType const &>() -
-                                std::declval<Rhs const &>()),
+                                detail::underlying_value(
+                                    std::declval<Rhs const &>())),
                             ValueType>::value,
                     Derived>::type
                 operator-(Derived const &lhs, Rhs const &rhs) noexcept(noexcept(
                     std::declval<ValueType const &>() -
-                    std::declval<Rhs const &>())) {
-                    return Derived{lhs.underlying_value() - rhs};
+                    detail::underlying_value(std::declval<Rhs const &>()))) {
+                    return Derived{lhs.underlying_value() -
+                                   detail::underlying_value(rhs)};
                 }
 
                 template <typename Lhs>
@@ -304,14 +349,16 @@ namespace jss {
                     !std::is_same<Lhs, Derived>::value &&
                         std::is_convertible<
                             decltype(
-                                std::declval<Lhs const &>() -
+                                detail::underlying_value(
+                                    std::declval<Lhs const &>()) -
                                 std::declval<ValueType const &>()),
                             ValueType>::value,
                     Derived>::type
                 operator-(Lhs const &lhs, Derived const &rhs) noexcept(noexcept(
-                    std::declval<Lhs const &>() -
+                    detail::underlying_value(std::declval<Lhs const &>()) -
                     std::declval<ValueType const &>())) {
-                    return Derived{lhs - rhs.underlying_value()};
+                    return Derived{detail::underlying_value(lhs) -
+                                   rhs.underlying_value()};
                 }
             };
         };
@@ -369,29 +416,35 @@ namespace jss {
                         std::is_convertible<
                             decltype(
                                 std::declval<ValueType const &>() <
-                                std::declval<Other const &>()),
+                                detail::underlying_value(
+                                    std::declval<Other const &>())),
                             bool>::value,
                     bool>::type
                 operator<(Derived const &lhs, Other const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() <
-                        std::declval<Other const &>())) {
-                    return lhs.underlying_value() < rhs;
+                        detail::underlying_value(
+                            std::declval<Other const &>()))) {
+                    return lhs.underlying_value() <
+                           detail::underlying_value(rhs);
                 }
 
                 friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
-                                std::declval<Other const &>() <
+                                detail::underlying_value(
+                                    std::declval<Other const &>()) <
                                 std::declval<ValueType const &>()),
                             bool>::value,
                     bool>::type
                 operator<(Other const &lhs, Derived const &rhs) noexcept(
                     noexcept(
-                        std::declval<Other const &>() <
+                        detail::underlying_value(
+                            std::declval<Other const &>()) <
                         std::declval<ValueType const &>())) {
-                    return lhs < rhs.underlying_value();
+                    return detail::underlying_value(lhs) <
+                           rhs.underlying_value();
                 }
 
                 friend typename std::enable_if<
@@ -399,29 +452,35 @@ namespace jss {
                         std::is_convertible<
                             decltype(
                                 std::declval<ValueType const &>() >
-                                std::declval<Other const &>()),
+                                detail::underlying_value(
+                                    std::declval<Other const &>())),
                             bool>::value,
                     bool>::type
                 operator>(Derived const &lhs, Other const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() >
-                        std::declval<Other const &>())) {
-                    return lhs.underlying_value() > rhs;
+                        detail::underlying_value(
+                            std::declval<Other const &>()))) {
+                    return lhs.underlying_value() >
+                           detail::underlying_value(rhs);
                 }
 
                 friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
-                                std::declval<Other const &>() >
+                                detail::underlying_value(
+                                    std::declval<Other const &>()) >
                                 std::declval<ValueType const &>()),
                             bool>::value,
                     bool>::type
                 operator>(Other const &lhs, Derived const &rhs) noexcept(
                     noexcept(
-                        std::declval<Other const &>() >
+                        detail::underlying_value(
+                            std::declval<Other const &>()) >
                         std::declval<ValueType const &>())) {
-                    return lhs > rhs.underlying_value();
+                    return detail::underlying_value(lhs) >
+                           rhs.underlying_value();
                 }
 
                 friend typename std::enable_if<
@@ -429,29 +488,34 @@ namespace jss {
                         std::is_convertible<
                             decltype(
                                 std::declval<ValueType const &>() >=
-                                std::declval<Other const &>()),
+                                detail::underlying_value(
+                                    std::declval<Other const &>())),
                             bool>::value,
                     bool>::type
                 operator>=(Derived const &lhs, Other const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() >=
                         std::declval<Other const &>())) {
-                    return lhs.underlying_value() >= rhs;
+                    return lhs.underlying_value() >=
+                           detail::underlying_value(rhs);
                 }
 
                 friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
-                                std::declval<Other const &>() >=
+                                detail::underlying_value(
+                                    std::declval<Other const &>()) >=
                                 std::declval<ValueType const &>()),
                             bool>::value,
                     bool>::type
                 operator>=(Other const &lhs, Derived const &rhs) noexcept(
                     noexcept(
-                        std::declval<Other const &>() >=
+                        detail::underlying_value(
+                            std::declval<Other const &>()) >=
                         std::declval<ValueType const &>())) {
-                    return lhs >= rhs.underlying_value();
+                    return detail::underlying_value(lhs) >=
+                           rhs.underlying_value();
                 }
 
                 friend typename std::enable_if<
@@ -459,29 +523,35 @@ namespace jss {
                         std::is_convertible<
                             decltype(
                                 std::declval<ValueType const &>() <=
-                                std::declval<Other const &>()),
+                                detail::underlying_value(
+                                    std::declval<Other const &>())),
                             bool>::value,
                     bool>::type
                 operator<=(Derived const &lhs, Other const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() <=
-                        std::declval<Other const &>())) {
-                    return lhs.underlying_value() <= rhs;
+                        detail::underlying_value(
+                            std::declval<Other const &>()))) {
+                    return lhs.underlying_value() <=
+                           detail::underlying_value(rhs);
                 }
 
                 friend typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
-                                std::declval<Other const &>() <=
+                                detail::underlying_value(
+                                    std::declval<Other const &>()) <=
                                 std::declval<ValueType const &>()),
                             bool>::value,
                     bool>::type
                 operator<=(Other const &lhs, Derived const &rhs) noexcept(
                     noexcept(
-                        std::declval<Other const &>() <=
+                        detail::underlying_value(
+                            std::declval<Other const &>()) <=
                         std::declval<ValueType const &>())) {
-                    return lhs <= rhs.underlying_value();
+                    return detail::underlying_value(lhs) <=
+                           rhs.underlying_value();
                 }
             };
         };
@@ -550,14 +620,16 @@ namespace jss {
                 operator<<(Derived const &lhs, Other const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>()
-                        << std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() << rhs};
+                        << detail::underlying_value(
+                               std::declval<Other const &>()))) {
+                    return Derived{lhs.underlying_value()
+                                   << detail::underlying_value(rhs)};
                 }
                 friend Derived &
                 operator<<=(Derived &lhs, Other const &rhs) noexcept(noexcept(
                     std::declval<ValueType &>()<<=
-                    std::declval<Other const &>())) {
-                    lhs.underlying_value()<<= rhs;
+                    detail::underlying_value(std::declval<Other const &>()))) {
+                    lhs.underlying_value()<<= detail::underlying_value(rhs);
                     return lhs;
                 }
             };
@@ -569,13 +641,15 @@ namespace jss {
             friend Derived
             operator<<(Derived const &lhs, Other const &rhs) noexcept(noexcept(
                 std::declval<ValueType const &>()
-                << std::declval<Other const &>())) {
-                return Derived{lhs.underlying_value() << rhs};
+                << detail::underlying_value(std::declval<Other const &>()))) {
+                return Derived{lhs.underlying_value()
+                               << detail::underlying_value(rhs)};
             }
             friend Derived &
             operator<<=(Derived &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType &>()<<= std::declval<Other const &>())) {
-                lhs.underlying_value()<<= rhs;
+                std::declval<ValueType &>()<<=
+                detail::underlying_value(std::declval<Other const &>()))) {
+                lhs.underlying_value()<<= detail::underlying_value(rhs);
                 return lhs;
             }
         };
@@ -589,14 +663,16 @@ namespace jss {
                 operator>>(Derived const &lhs, Other const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() >>
-                        std::declval<Other const &>())) {
-                    return Derived{lhs.underlying_value() >> rhs};
+                        detail::underlying_value(
+                            std::declval<Other const &>()))) {
+                    return Derived{lhs.underlying_value() >>
+                                   detail::underlying_value(rhs)};
                 }
                 friend Derived &
                 operator>>=(Derived &lhs, Other const &rhs) noexcept(noexcept(
                     std::declval<ValueType &>()>>=
-                    std::declval<Other const &>())) {
-                    lhs.underlying_value()>>= rhs;
+                    detail::underlying_value(std::declval<Other const &>()))) {
+                    lhs.underlying_value()>>= detail::underlying_value(rhs);
                     return lhs;
                 }
             };
@@ -608,13 +684,15 @@ namespace jss {
             friend Derived
             operator>>(Derived const &lhs, Other const &rhs) noexcept(noexcept(
                 std::declval<ValueType const &>() >>
-                std::declval<Other const &>())) {
-                return Derived{lhs.underlying_value() >> rhs};
+                detail::underlying_value(std::declval<Other const &>()))) {
+                return Derived{lhs.underlying_value() >>
+                               detail::underlying_value(rhs)};
             }
             friend Derived &
             operator>>=(Derived &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType &>()>>= std::declval<Other const &>())) {
-                lhs.underlying_value()>>= rhs;
+                std::declval<ValueType &>()>>=
+                detail::underlying_value(std::declval<Other const &>()))) {
+                lhs.underlying_value()>>= detail::underlying_value(rhs);
                 return lhs;
             }
         };

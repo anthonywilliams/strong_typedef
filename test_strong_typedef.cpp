@@ -1801,6 +1801,36 @@ void test_compound_assignment() {
     assert(st5.underlying_value() == 54);
 }
 
+void test_adding_two_strong_typedefs() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    using ST1= jss::strong_typedef<struct tag1, int>;
+    using ST2= jss::strong_typedef<
+        struct tag2, int, jss::strong_typedef_properties::mixed_addable<ST1>>;
+
+    constexpr ST1 st1(23);
+    constexpr ST2 st2(46);
+
+    constexpr ST2 st3= st2 + st1;
+    constexpr ST2 st4= st1 + st2;
+
+    static_assert(st3.underlying_value() == 69);
+    static_assert(st4.underlying_value() == 69);
+
+    using STS1= jss::strong_typedef<struct tag1, std::string>;
+    using STS2= jss::strong_typedef<
+        struct tag2, std::string,
+        jss::strong_typedef_properties::mixed_addable<STS1>>;
+
+    STS1 sts1("hello");
+    STS2 sts2("world");
+
+    STS2 sts3= sts2 + sts1;
+    STS2 sts4= sts1 + sts2;
+
+    assert(sts3.underlying_value() == "worldhello");
+    assert(sts4.underlying_value() == "helloworld");
+}
 int main() {
     test_strong_typedef_is_not_original();
     test_strong_typedef_explicitly_convertible_from_source();
@@ -1846,4 +1876,5 @@ int main() {
     test_bitwise_left_shift();
     test_bitwise_right_shift();
     test_compound_assignment();
+    test_adding_two_strong_typedefs();
 }
