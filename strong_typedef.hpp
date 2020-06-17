@@ -6,499 +6,710 @@
 #include <ostream>
 
 namespace jss {
+    namespace detail {
+        using small_result= char;
+        struct large_result {
+            small_result dummy[2];
+        };
 
-    enum class strong_typedef_properties {
-        none= 0,
-        equality_comparable= 1,
-        pre_incrementable= 2,
-        post_incrementable= 4,
-        pre_decrementable= 8,
-        post_decrementable= 16,
-        addable= 32,
-        subtractable= 64,
-        ordered= 128,
-        mixed_ordered= 256,
-        hashable= 512,
-        streamable= 1024,
-        incrementable= pre_incrementable | post_incrementable,
-        decrementable= pre_decrementable | post_decrementable,
-        comparable= ordered | equality_comparable
-    };
+        template <typename Derived, typename ValueType, typename... Properties>
+        class strong_typedef_base
+            : public Properties::template mixin<Derived, ValueType>... {
+        public:
+            using underlying_value_type= ValueType;
 
-    constexpr strong_typedef_properties operator&(
-        strong_typedef_properties lhs, strong_typedef_properties rhs) noexcept {
-        typedef typename std::underlying_type<strong_typedef_properties>::type
-            underlying;
-        return static_cast<strong_typedef_properties>(
-            static_cast<underlying>(lhs) & static_cast<underlying>(rhs));
+            constexpr strong_typedef_base() noexcept : value() {}
+
+            explicit constexpr strong_typedef_base(ValueType value_) noexcept(
+                std::is_nothrow_move_constructible<ValueType>::value) :
+                value(std::move(value_)) {}
+
+            explicit constexpr operator ValueType const &() const noexcept {
+                return value;
+            }
+
+            constexpr ValueType const &underlying_value() const noexcept {
+                return value;
+            }
+
+            constexpr ValueType &underlying_value() noexcept {
+                return value;
+            }
+
+        private:
+            ValueType value;
+        };
+
+        template <typename T> constexpr T &&underlying_value(T &&t) {
+            return std::forward<T>(t);
+        }
+
     }
 
-    constexpr strong_typedef_properties operator|(
-        strong_typedef_properties lhs, strong_typedef_properties rhs) noexcept {
-        typedef typename std::underlying_type<strong_typedef_properties>::type
-            underlying;
-        return static_cast<strong_typedef_properties>(
-            static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
-    }
-
-    template <
-        typename Tag, typename ValueType,
-        strong_typedef_properties Properties= strong_typedef_properties::none>
-    class strong_typedef {
-    public:
-        using underlying_value_type= ValueType;
-
-        constexpr strong_typedef() noexcept : value() {}
-
-        explicit constexpr strong_typedef(ValueType value_) noexcept(
-            std::is_nothrow_move_constructible<ValueType>::value) :
-            value(std::move(value_)) {}
-
-        explicit constexpr operator ValueType const &() const noexcept {
-            return value;
-        }
-
-        constexpr ValueType const &underlying_value() const noexcept {
-            return value;
-        }
-
-        constexpr ValueType &underlying_value() noexcept {
-            return value;
-        }
-
-    private:
-        ValueType value;
+    template <typename Tag, typename ValueType, typename... Properties>
+    struct strong_typedef : detail::strong_typedef_base<
+                                strong_typedef<Tag, ValueType, Properties...>,
+                                ValueType, Properties...> {
+        using detail::strong_typedef_base<
+            strong_typedef<Tag, ValueType, Properties...>, ValueType,
+            Properties...>::strong_typedef_base;
     };
 
     namespace detail {
-        template <
-            typename,
-            strong_typedef_properties= strong_typedef_properties::none>
-        struct is_strong_typedef_with_properties : std::false_type {};
-
-        template <
-            typename Tag, typename ValueType,
-            strong_typedef_properties ActualProperties,
-            strong_typedef_properties RequiredProperties>
-        struct is_strong_typedef_with_properties<
-            strong_typedef<Tag, ValueType, ActualProperties>,
-            RequiredProperties>
-            : std::integral_constant<
-                  bool, (ActualProperties & RequiredProperties) ==
-                            RequiredProperties> {};
-
+        template <typename Tag, typename ValueType, typename... Properties>
+        constexpr ValueType &underlying_value(
+            jss::strong_typedef<Tag, ValueType, Properties...> &t) {
+            return t.underlying_value();
+        }
+        template <typename Tag, typename ValueType, typename... Properties>
+        constexpr ValueType const &underlying_value(
+            jss::strong_typedef<Tag, ValueType, Properties...> const &t) {
+            return t.underlying_value();
+        }
+        template <typename Tag, typename ValueType, typename... Properties>
+        constexpr ValueType &&underlying_value(
+            jss::strong_typedef<Tag, ValueType, Properties...> &&t) {
+            return std::move(t.underlying_value());
+        }
+        template <typename Tag, typename ValueType, typename... Properties>
+        constexpr ValueType const &&underlying_value(
+            jss::strong_typedef<Tag, ValueType, Properties...> const &&t) {
+            return std::move(t.underlying_value());
+        }
     }
 
-    template <typename T>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            T, strong_typedef_properties::equality_comparable>::value,
-        bool>::type
-    operator==(T const &lhs, T const &rhs) noexcept(noexcept(
-        std::declval<T &>().underlying_value() ==
-        std::declval<T &>().underlying_value())) {
-        return lhs.underlying_value() == rhs.underlying_value();
-    }
+    namespace strong_typedef_properties {
+        struct equality_comparable {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend constexpr bool
+                operator==(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() ==
+                        std::declval<ValueType const &>())) {
+                    return lhs.underlying_value() == rhs.underlying_value();
+                }
+                friend constexpr bool
+                operator!=(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() !=
+                        std::declval<ValueType const &>())) {
+                    return lhs.underlying_value() != rhs.underlying_value();
+                }
+            };
+        };
 
-    template <typename T>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            T, strong_typedef_properties::equality_comparable>::value,
-        bool>::type
-    operator!=(T const &lhs, T const &rhs) noexcept(noexcept(
-        std::declval<T &>().underlying_value() !=
-        std::declval<T &>().underlying_value())) {
-        return lhs.underlying_value() != rhs.underlying_value();
-    }
+        struct pre_incrementable {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend Derived &operator++(Derived &self) noexcept(
+                    noexcept(++std::declval<ValueType &>())) {
+                    ++self.underlying_value();
+                    return self;
+                }
+            };
+        };
 
-    template <
-        typename Tag, typename ValueType, strong_typedef_properties Properties>
-    constexpr typename std::enable_if<
-        (Properties & strong_typedef_properties::pre_incrementable) ==
-            strong_typedef_properties::pre_incrementable,
-        strong_typedef<Tag, ValueType, Properties> &>::type
-    operator++(strong_typedef<Tag, ValueType, Properties> &self) noexcept(
-        noexcept(++std::declval<ValueType &>())) {
-        ++self.underlying_value();
-        return self;
-    }
+        struct post_incrementable {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend Derived operator++(Derived &self, int) noexcept(
+                    noexcept(std::declval<ValueType &>()++)) {
+                    return Derived{self.underlying_value()++};
+                }
+            };
+        };
 
-    template <
-        typename Tag, typename ValueType, strong_typedef_properties Properties>
-    constexpr typename std::enable_if<
-        (Properties & strong_typedef_properties::post_incrementable) ==
-            strong_typedef_properties::post_incrementable,
-        strong_typedef<Tag, ValueType, Properties> &>::type
-    operator++(strong_typedef<Tag, ValueType, Properties> &self, int) noexcept(
-        noexcept(std::declval<ValueType &>()++)) {
-        self.underlying_value()++;
-        return self;
-    }
+        struct incrementable {
+            template <typename Derived, typename ValueType>
+            struct mixin : pre_incrementable::mixin<Derived, ValueType>,
+                           post_incrementable::mixin<Derived, ValueType> {};
+        };
 
-    template <
-        typename Tag, typename ValueType, strong_typedef_properties Properties>
-    constexpr typename std::enable_if<
-        (Properties & strong_typedef_properties::pre_decrementable) ==
-            strong_typedef_properties::pre_decrementable,
-        strong_typedef<Tag, ValueType, Properties> &>::type
-    operator--(strong_typedef<Tag, ValueType, Properties> &self) noexcept(
-        noexcept(--std::declval<ValueType &>())) {
-        --self.underlying_value();
-        return self;
-    }
+        struct pre_decrementable {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend Derived &operator--(Derived &self) noexcept(
+                    noexcept(--std::declval<ValueType &>())) {
+                    --self.underlying_value();
+                    return self;
+                }
+            };
+        };
 
-    template <
-        typename Tag, typename ValueType, strong_typedef_properties Properties>
-    constexpr typename std::enable_if<
-        (Properties & strong_typedef_properties::post_decrementable) ==
-            strong_typedef_properties::post_decrementable,
-        strong_typedef<Tag, ValueType, Properties> &>::type
-    operator--(strong_typedef<Tag, ValueType, Properties> &self, int) noexcept(
-        noexcept(std::declval<ValueType &>()--)) {
-        self.underlying_value()--;
-        return self;
-    }
+        struct post_decrementable {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend Derived operator--(Derived &self, int) noexcept(
+                    noexcept(std::declval<ValueType &>()--)) {
+                    return Derived{self.underlying_value()--};
+                }
+            };
+        };
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Lhs, strong_typedef_properties::addable>::value &&
-            !detail::is_strong_typedef_with_properties<Rhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<
-                        typename Lhs::underlying_value_type const &>() +
-                    std::declval<Rhs const &>()),
-                typename Lhs::underlying_value_type>::value,
-        Lhs>::type
-    operator+(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<typename Lhs::underlying_value_type const &>() +
-        std::declval<Rhs const &>())) {
-        return Lhs(lhs.underlying_value() + rhs);
-    }
+        struct decrementable {
+            template <typename Derived, typename ValueType>
+            struct mixin : pre_decrementable::mixin<Derived, ValueType>,
+                           post_decrementable::mixin<Derived, ValueType> {};
+        };
 
-    template <typename ST>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            ST, strong_typedef_properties::addable>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<typename ST::underlying_value_type const &>() +
-                    std::declval<typename ST::underlying_value_type const &>()),
-                typename ST::underlying_value_type>::value,
-        ST>::type
-    operator+(ST const &lhs, ST const &rhs) noexcept(noexcept(
-        std::declval<typename ST::underlying_value_type const &>() +
-        std::declval<typename ST::underlying_value_type const &>())) {
-        return ST(lhs.underlying_value() + rhs.underlying_value());
-    }
+        struct generic_mixed_addable {
+            template <typename Derived, typename ValueType> struct mixin {
+                template <typename Rhs>
+                friend typename std::enable_if<
+                    !std::is_same<Rhs, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                std::declval<ValueType const &>() +
+                                detail::underlying_value(
+                                    std::declval<Rhs const &>())),
+                            ValueType>::value,
+                    Derived>::type
+                operator+(Derived const &lhs, Rhs const &rhs) noexcept(noexcept(
+                    std::declval<ValueType const &>() +
+                    detail::underlying_value(std::declval<Rhs const &>()))) {
+                    return Derived{lhs.underlying_value() +
+                                   detail::underlying_value(rhs)};
+                }
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Rhs, strong_typedef_properties::addable>::value &&
-            !detail::is_strong_typedef_with_properties<Lhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<Lhs const &>() +
-                    std::declval<
-                        typename Rhs::underlying_value_type const &>()),
-                typename Rhs::underlying_value_type>::value,
-        Rhs>::type
-    operator+(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<Lhs const &>() +
-        std::declval<typename Rhs::underlying_value_type const &>())) {
-        return Rhs(lhs + rhs.underlying_value());
-    }
+                template <typename Lhs>
+                friend typename std::enable_if<
+                    !std::is_same<Lhs, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                detail::underlying_value(
+                                    std::declval<Lhs const &>()) +
+                                std::declval<ValueType const &>()),
+                            ValueType>::value,
+                    Derived>::type
+                operator+(Lhs const &lhs, Derived const &rhs) noexcept(noexcept(
+                    detail::underlying_value(std::declval<Lhs const &>()) +
+                    std::declval<ValueType const &>())) {
+                    return Derived{detail::underlying_value(lhs) +
+                                   rhs.underlying_value()};
+                }
+            };
+        };
+#define JSS_COMPOUND_ASSIGN(op_symbol) op_symbol##=
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Lhs, strong_typedef_properties::subtractable>::value &&
-            !detail::is_strong_typedef_with_properties<Rhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<
-                        typename Lhs::underlying_value_type const &>() -
-                    std::declval<Rhs const &>()),
-                typename Lhs::underlying_value_type>::value,
-        Lhs>::type
-    operator-(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<typename Lhs::underlying_value_type const &>() -
-        std::declval<Rhs const &>())) {
-        return Lhs(lhs.underlying_value() - rhs);
-    }
+#define JSS_DEFINE_OP_MIXINS(name, op_symbol)                                  \
+    template <typename Other> struct mixed_##name {                            \
+        template <                                                             \
+            typename Derived, typename ValueType,                              \
+            bool= std::is_literal_type<ValueType>::value>                      \
+        struct mixin {                                                         \
+            friend constexpr Derived                                           \
+            operator op_symbol(Derived const &lhs, Other const &rhs) noexcept( \
+                noexcept(std::declval<ValueType const &>()                     \
+                             op_symbol detail::underlying_value(               \
+                                 std::declval<Other const &>()))) {            \
+                return Derived{lhs.underlying_value()                          \
+                                   op_symbol detail::underlying_value(rhs)};   \
+            }                                                                  \
+                                                                               \
+            friend constexpr Derived                                           \
+            operator op_symbol(Other const &lhs, Derived const &rhs) noexcept( \
+                noexcept(                                                      \
+                    detail::underlying_value(std::declval<Other const &>())    \
+                        op_symbol std::declval<ValueType const &>())) {        \
+                return Derived{detail::underlying_value(lhs)                   \
+                                   op_symbol rhs.underlying_value()};          \
+            }                                                                  \
+                                                                               \
+            friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(           \
+                Derived &lhs,                                                  \
+                Other const                                                    \
+                    &rhs) noexcept(noexcept(std::declval<ValueType &>()        \
+                                                JSS_COMPOUND_ASSIGN(op_symbol) \
+                                                    detail::underlying_value(  \
+                                                        std::declval<          \
+                                                            Other const        \
+                                                                &>()))) {      \
+                lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol)          \
+                    detail::underlying_value(rhs);                             \
+                return lhs;                                                    \
+            }                                                                  \
+        };                                                                     \
+    };                                                                         \
+    template <typename Other>                                                  \
+    template <typename Derived, typename ValueType>                            \
+    struct mixed_##name<Other>::mixin<Derived, ValueType, false> {             \
+        friend Derived                                                         \
+        operator op_symbol(Derived const &lhs, Other const &rhs) noexcept(     \
+            noexcept(std::declval<ValueType const &>()                         \
+                         op_symbol detail::underlying_value(                   \
+                             std::declval<Other const &>()))) {                \
+            return Derived{lhs.underlying_value()                              \
+                               op_symbol detail::underlying_value(rhs)};       \
+        }                                                                      \
+                                                                               \
+        friend Derived                                                         \
+        operator op_symbol(Other const &lhs, Derived const &rhs) noexcept(     \
+            noexcept(detail::underlying_value(std::declval<Other const &>())   \
+                         op_symbol std::declval<ValueType const &>())) {       \
+            return Derived{detail::underlying_value(lhs)                       \
+                               op_symbol rhs.underlying_value()};              \
+        }                                                                      \
+                                                                               \
+        friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(               \
+            Derived &lhs,                                                      \
+            Other const                                                        \
+                &rhs) noexcept(noexcept(std::declval<ValueType &>()            \
+                                            JSS_COMPOUND_ASSIGN(op_symbol)     \
+                                                detail::underlying_value(      \
+                                                    std::declval<              \
+                                                        Other const &>()))) {  \
+            lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol)              \
+                detail::underlying_value(rhs);                                 \
+            return lhs;                                                        \
+        }                                                                      \
+    };                                                                         \
+    struct self_##name {                                                       \
+        template <                                                             \
+            typename Derived, typename ValueType,                              \
+            bool= std::is_literal_type<ValueType>::value>                      \
+        struct mixin {                                                         \
+            friend constexpr Derived operator op_symbol(                       \
+                Derived const &lhs,                                            \
+                Derived const                                                  \
+                    &rhs) noexcept(noexcept(std::declval<ValueType const &>()  \
+                                                op_symbol std::declval<        \
+                                                    ValueType const &>())) {   \
+                return Derived{lhs.underlying_value()                          \
+                                   op_symbol rhs.underlying_value()};          \
+            }                                                                  \
+            friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(           \
+                Derived &lhs,                                                  \
+                Derived const                                                  \
+                    &rhs) noexcept(noexcept(std::declval<ValueType &>()        \
+                                                JSS_COMPOUND_ASSIGN(op_symbol) \
+                                                    std::declval<              \
+                                                        ValueType const        \
+                                                            &>())) {           \
+                lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol)          \
+                    rhs.underlying_value();                                    \
+                return lhs;                                                    \
+            }                                                                  \
+        };                                                                     \
+    };                                                                         \
+                                                                               \
+    template <typename Derived, typename ValueType>                            \
+    struct self_##name::mixin<Derived, ValueType, false> {                     \
+        friend Derived                                                         \
+        operator op_symbol(Derived const &lhs, Derived const &rhs) noexcept(   \
+            noexcept(std::declval<ValueType const &>()                         \
+                         op_symbol std::declval<ValueType const &>())) {       \
+            return Derived{lhs.underlying_value()                              \
+                               op_symbol rhs.underlying_value()};              \
+        }                                                                      \
+        friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(               \
+            Derived &lhs,                                                      \
+            Derived const                                                      \
+                &rhs) noexcept(noexcept(std::declval<ValueType &>()            \
+                                            JSS_COMPOUND_ASSIGN(op_symbol)     \
+                                                std::declval<                  \
+                                                    ValueType const &>())) {   \
+            lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol)              \
+                rhs.underlying_value();                                        \
+            return lhs;                                                        \
+        }                                                                      \
+    };                                                                         \
+    struct name {                                                              \
+        template <typename Derived, typename ValueType>                        \
+        struct mixin                                                           \
+            : self_##name::mixin<Derived, ValueType>,                          \
+              mixed_##name<ValueType>::template mixin<Derived, ValueType> {};  \
+    };
 
-    template <typename ST>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            ST, strong_typedef_properties::subtractable>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<typename ST::underlying_value_type const &>() -
-                    std::declval<typename ST::underlying_value_type const &>()),
-                typename ST::underlying_value_type>::value,
-        ST>::type
-    operator-(ST const &lhs, ST const &rhs) noexcept(noexcept(
-        std::declval<typename ST::underlying_value_type const &>() -
-        std::declval<typename ST::underlying_value_type const &>())) {
-        return ST(lhs.underlying_value() - rhs.underlying_value());
-    }
+        JSS_DEFINE_OP_MIXINS(addable, +)
+        JSS_DEFINE_OP_MIXINS(subtractable, -)
+        JSS_DEFINE_OP_MIXINS(multiplicable, *)
+        JSS_DEFINE_OP_MIXINS(divisible, /)
+        JSS_DEFINE_OP_MIXINS(modulus, %)
+        JSS_DEFINE_OP_MIXINS(bitwise_or, |)
+        JSS_DEFINE_OP_MIXINS(bitwise_and, &)
+        JSS_DEFINE_OP_MIXINS(bitwise_xor, ^)
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Rhs, strong_typedef_properties::subtractable>::value &&
-            !detail::is_strong_typedef_with_properties<Lhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<Lhs const &>() -
-                    std::declval<
-                        typename Rhs::underlying_value_type const &>()),
-                typename Rhs::underlying_value_type>::value,
-        Rhs>::type
-    operator-(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<Lhs const &>() -
-        std::declval<typename Rhs::underlying_value_type const &>())) {
-        return Rhs(lhs - rhs.underlying_value());
-    }
+        struct generic_mixed_subtractable {
+            template <typename Derived, typename ValueType> struct mixin {
+                template <typename Rhs>
+                friend typename std::enable_if<
+                    !std::is_same<Rhs, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                std::declval<ValueType const &>() -
+                                detail::underlying_value(
+                                    std::declval<Rhs const &>())),
+                            ValueType>::value,
+                    Derived>::type
+                operator-(Derived const &lhs, Rhs const &rhs) noexcept(noexcept(
+                    std::declval<ValueType const &>() -
+                    detail::underlying_value(std::declval<Rhs const &>()))) {
+                    return Derived{lhs.underlying_value() -
+                                   detail::underlying_value(rhs)};
+                }
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Lhs, strong_typedef_properties::mixed_ordered>::value &&
-            !detail::is_strong_typedef_with_properties<Rhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<typename Lhs::underlying_value_type const
-                                     &>() < std::declval<Rhs const &>()),
-                bool>::value,
-        bool>::type
-    operator<(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<typename Lhs::underlying_value_type const &>() <
-        std::declval<Rhs const &>())) {
-        return lhs.underlying_value() < rhs;
-    }
+                template <typename Lhs>
+                friend typename std::enable_if<
+                    !std::is_same<Lhs, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                detail::underlying_value(
+                                    std::declval<Lhs const &>()) -
+                                std::declval<ValueType const &>()),
+                            ValueType>::value,
+                    Derived>::type
+                operator-(Lhs const &lhs, Derived const &rhs) noexcept(noexcept(
+                    detail::underlying_value(std::declval<Lhs const &>()) -
+                    std::declval<ValueType const &>())) {
+                    return Derived{detail::underlying_value(lhs) -
+                                   rhs.underlying_value()};
+                }
+            };
+        };
 
-    template <typename ST>
-    constexpr typename std::enable_if<
-        (detail::is_strong_typedef_with_properties<
-             ST, strong_typedef_properties::ordered>::value ||
-         detail::is_strong_typedef_with_properties<
-             ST, strong_typedef_properties::mixed_ordered>::value) &&
-            std::is_convertible<
-                decltype(
-                    std::declval<typename ST::underlying_value_type const &>() <
-                    std::declval<typename ST::underlying_value_type const &>()),
-                bool>::value,
-        bool>::type
-    operator<(ST const &lhs, ST const &rhs) noexcept(noexcept(
-        std::declval<typename ST::underlying_value_type const &>() <
-        std::declval<typename ST::underlying_value_type const &>())) {
-        return lhs.underlying_value() < rhs.underlying_value();
-    }
+        template <typename DifferenceType> struct difference {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend DifferenceType
+                operator-(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() -
+                        std::declval<ValueType const &>())) {
+                    return DifferenceType{lhs.underlying_value() -
+                                          rhs.underlying_value()};
+                }
+            };
+        };
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Rhs, strong_typedef_properties::mixed_ordered>::value &&
-            !detail::is_strong_typedef_with_properties<Lhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<Lhs const &>() <
-                    std::declval<
-                        typename Rhs::underlying_value_type const &>()),
-                bool>::value,
-        bool>::type
-    operator<(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<Lhs const &>() <
-        std::declval<typename Rhs::underlying_value_type const &>())) {
-        return lhs < rhs.underlying_value();
-    }
+        struct ordered {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend constexpr bool
+                operator<(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() <
+                        std::declval<ValueType const &>())) {
+                    return lhs.underlying_value() < rhs.underlying_value();
+                }
+                friend constexpr bool
+                operator>(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() >
+                        std::declval<ValueType const &>())) {
+                    return lhs.underlying_value() > rhs.underlying_value();
+                }
+                friend constexpr bool
+                operator<=(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() <=
+                        std::declval<ValueType const &>())) {
+                    return lhs.underlying_value() <= rhs.underlying_value();
+                }
+                friend constexpr bool
+                operator>=(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() >=
+                        std::declval<ValueType const &>())) {
+                    return lhs.underlying_value() >= rhs.underlying_value();
+                }
+            };
+        };
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Lhs, strong_typedef_properties::mixed_ordered>::value &&
-            !detail::is_strong_typedef_with_properties<Rhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<typename Lhs::underlying_value_type const
-                                     &>() <= std::declval<Rhs const &>()),
-                typename Lhs::underlying_value_type>::value,
-        bool>::type
-    operator<=(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<typename Lhs::underlying_value_type const &>() <=
-        std::declval<Rhs const &>())) {
-        return lhs.underlying_value() <= rhs;
-    }
+        template <typename Other> struct mixed_ordered {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend typename std::enable_if<
+                    !std::is_same<Other, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                std::declval<ValueType const &>() <
+                                detail::underlying_value(
+                                    std::declval<Other const &>())),
+                            bool>::value,
+                    bool>::type
+                operator<(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() <
+                        detail::underlying_value(
+                            std::declval<Other const &>()))) {
+                    return lhs.underlying_value() <
+                           detail::underlying_value(rhs);
+                }
 
-    template <typename ST>
-    constexpr typename std::enable_if<
-        (detail::is_strong_typedef_with_properties<
-             ST, strong_typedef_properties::ordered>::value ||
-         detail::is_strong_typedef_with_properties<
-             ST, strong_typedef_properties::mixed_ordered>::value) &&
-            std::is_convertible<
-                decltype(
-                    std::declval<
-                        typename ST::underlying_value_type const &>() <=
-                    std::declval<typename ST::underlying_value_type const &>()),
-                bool>::value,
-        bool>::type
-    operator<=(ST const &lhs, ST const &rhs) noexcept(noexcept(
-        std::declval<typename ST::underlying_value_type const &>() <=
-        std::declval<typename ST::underlying_value_type const &>())) {
-        return lhs.underlying_value() <= rhs.underlying_value();
-    }
+                friend typename std::enable_if<
+                    !std::is_same<Other, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                detail::underlying_value(
+                                    std::declval<Other const &>()) <
+                                std::declval<ValueType const &>()),
+                            bool>::value,
+                    bool>::type
+                operator<(Other const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        detail::underlying_value(
+                            std::declval<Other const &>()) <
+                        std::declval<ValueType const &>())) {
+                    return detail::underlying_value(lhs) <
+                           rhs.underlying_value();
+                }
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Rhs, strong_typedef_properties::mixed_ordered>::value &&
-            !detail::is_strong_typedef_with_properties<Lhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<Lhs const &>() <=
-                    std::declval<
-                        typename Rhs::underlying_value_type const &>()),
-                bool>::value,
-        bool>::type
-    operator<=(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<Lhs const &>() <=
-        std::declval<typename Rhs::underlying_value_type const &>())) {
-        return lhs <= rhs.underlying_value();
-    }
+                friend typename std::enable_if<
+                    !std::is_same<Other, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                std::declval<ValueType const &>() >
+                                detail::underlying_value(
+                                    std::declval<Other const &>())),
+                            bool>::value,
+                    bool>::type
+                operator>(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() >
+                        detail::underlying_value(
+                            std::declval<Other const &>()))) {
+                    return lhs.underlying_value() >
+                           detail::underlying_value(rhs);
+                }
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Lhs, strong_typedef_properties::mixed_ordered>::value &&
-            !detail::is_strong_typedef_with_properties<Rhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<typename Lhs::underlying_value_type const
-                                     &>() >= std::declval<Rhs const &>()),
-                typename Lhs::underlying_value_type>::value,
-        bool>::type
-    operator>=(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<typename Lhs::underlying_value_type const &>() >=
-        std::declval<Rhs const &>())) {
-        return lhs.underlying_value() >= rhs;
-    }
+                friend typename std::enable_if<
+                    !std::is_same<Other, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                detail::underlying_value(
+                                    std::declval<Other const &>()) >
+                                std::declval<ValueType const &>()),
+                            bool>::value,
+                    bool>::type
+                operator>(Other const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        detail::underlying_value(
+                            std::declval<Other const &>()) >
+                        std::declval<ValueType const &>())) {
+                    return detail::underlying_value(lhs) >
+                           rhs.underlying_value();
+                }
 
-    template <typename ST>
-    constexpr typename std::enable_if<
-        (detail::is_strong_typedef_with_properties<
-             ST, strong_typedef_properties::ordered>::value ||
-         detail::is_strong_typedef_with_properties<
-             ST, strong_typedef_properties::mixed_ordered>::value) &&
-            std::is_convertible<
-                decltype(
-                    std::declval<
-                        typename ST::underlying_value_type const &>() >=
-                    std::declval<typename ST::underlying_value_type const &>()),
-                bool>::value,
-        bool>::type
-    operator>=(ST const &lhs, ST const &rhs) noexcept(noexcept(
-        std::declval<typename ST::underlying_value_type const &>() >=
-        std::declval<typename ST::underlying_value_type const &>())) {
-        return lhs.underlying_value() >= rhs.underlying_value();
-    }
+                friend typename std::enable_if<
+                    !std::is_same<Other, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                std::declval<ValueType const &>() >=
+                                detail::underlying_value(
+                                    std::declval<Other const &>())),
+                            bool>::value,
+                    bool>::type
+                operator>=(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() >=
+                        std::declval<Other const &>())) {
+                    return lhs.underlying_value() >=
+                           detail::underlying_value(rhs);
+                }
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Rhs, strong_typedef_properties::mixed_ordered>::value &&
-            !detail::is_strong_typedef_with_properties<Lhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<Lhs const &>() >=
-                    std::declval<
-                        typename Rhs::underlying_value_type const &>()),
-                bool>::value,
-        bool>::type
-    operator>=(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<Lhs const &>() >=
-        std::declval<typename Rhs::underlying_value_type const &>())) {
-        return lhs >= rhs.underlying_value();
-    }
+                friend typename std::enable_if<
+                    !std::is_same<Other, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                detail::underlying_value(
+                                    std::declval<Other const &>()) >=
+                                std::declval<ValueType const &>()),
+                            bool>::value,
+                    bool>::type
+                operator>=(Other const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        detail::underlying_value(
+                            std::declval<Other const &>()) >=
+                        std::declval<ValueType const &>())) {
+                    return detail::underlying_value(lhs) >=
+                           rhs.underlying_value();
+                }
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Lhs, strong_typedef_properties::mixed_ordered>::value &&
-            !detail::is_strong_typedef_with_properties<Rhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<typename Lhs::underlying_value_type const
-                                     &>() > std::declval<Rhs const &>()),
-                typename Lhs::underlying_value_type>::value,
-        bool>::type
-    operator>(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<typename Lhs::underlying_value_type const &>() >
-        std::declval<Rhs const &>())) {
-        return lhs.underlying_value() > rhs;
-    }
+                friend typename std::enable_if<
+                    !std::is_same<Other, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                std::declval<ValueType const &>() <=
+                                detail::underlying_value(
+                                    std::declval<Other const &>())),
+                            bool>::value,
+                    bool>::type
+                operator<=(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() <=
+                        detail::underlying_value(
+                            std::declval<Other const &>()))) {
+                    return lhs.underlying_value() <=
+                           detail::underlying_value(rhs);
+                }
 
-    template <typename ST>
-    constexpr typename std::enable_if<
-        (detail::is_strong_typedef_with_properties<
-             ST, strong_typedef_properties::ordered>::value ||
-         detail::is_strong_typedef_with_properties<
-             ST, strong_typedef_properties::mixed_ordered>::value) &&
-            std::is_convertible<
-                decltype(
-                    std::declval<typename ST::underlying_value_type const &>() >
-                    std::declval<typename ST::underlying_value_type const &>()),
-                bool>::value,
-        bool>::type
-    operator>(ST const &lhs, ST const &rhs) noexcept(noexcept(
-        std::declval<typename ST::underlying_value_type const &>() >
-        std::declval<typename ST::underlying_value_type const &>())) {
-        return lhs.underlying_value() > rhs.underlying_value();
-    }
+                friend typename std::enable_if<
+                    !std::is_same<Other, Derived>::value &&
+                        std::is_convertible<
+                            decltype(
+                                detail::underlying_value(
+                                    std::declval<Other const &>()) <=
+                                std::declval<ValueType const &>()),
+                            bool>::value,
+                    bool>::type
+                operator<=(Other const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        detail::underlying_value(
+                            std::declval<Other const &>()) <=
+                        std::declval<ValueType const &>())) {
+                    return detail::underlying_value(lhs) <=
+                           rhs.underlying_value();
+                }
+            };
+        };
 
-    template <typename Lhs, typename Rhs>
-    constexpr typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            Rhs, strong_typedef_properties::mixed_ordered>::value &&
-            !detail::is_strong_typedef_with_properties<Lhs>::value &&
-            std::is_convertible<
-                decltype(
-                    std::declval<Lhs const &>() >
-                    std::declval<
-                        typename Rhs::underlying_value_type const &>()),
-                bool>::value,
-        bool>::type
-    operator>(Lhs const &lhs, Rhs const &rhs) noexcept(noexcept(
-        std::declval<Lhs const &>() >
-        std::declval<typename Rhs::underlying_value_type const &>())) {
-        return lhs > rhs.underlying_value();
-    }
+        struct hashable {
+            struct base {};
+            template <typename Derived, typename ValueType>
+            struct mixin : base {};
+        };
 
-    template <typename ST>
-    typename std::enable_if<
-        detail::is_strong_typedef_with_properties<
-            ST, strong_typedef_properties::streamable>::value,
-        std::ostream &>::type
-    operator<<(std::ostream &os, ST const &st) {
-        return os << st.underlying_value();
-    }
+        struct streamable {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend std::ostream &
+                operator<<(std::ostream &os, Derived const &st) {
+                    return os << st.underlying_value();
+                }
+            };
+        };
 
+        struct comparable {
+            template <typename Derived, typename ValueType>
+            struct mixin
+                : ordered::template mixin<Derived, ValueType>,
+                  equality_comparable::template mixin<Derived, ValueType> {};
+        };
+
+        template <typename RatioType> struct ratio {
+            template <typename Derived, typename ValueType> struct mixin {
+                friend RatioType
+                operator/(Derived const &lhs, Derived const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() /
+                        std::declval<ValueType const &>())) {
+                    return RatioType{lhs.underlying_value() /
+                                     rhs.underlying_value()};
+                }
+            };
+        };
+
+        struct bitwise_not {
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived operator~(Derived const &lhs) noexcept(
+                    noexcept(~std::declval<ValueType const &>())) {
+                    return Derived{~lhs.underlying_value()};
+                }
+            };
+        };
+
+        template <typename Derived, typename ValueType>
+        struct bitwise_not::mixin<Derived, ValueType, false> {
+            friend Derived operator~(Derived const &lhs) noexcept(
+                noexcept(~std::declval<ValueType const &>())) {
+                return Derived{~lhs.underlying_value()};
+            }
+        };
+
+        template <typename Other> struct bitwise_left_shift {
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
+                operator<<(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>()
+                        << detail::underlying_value(
+                               std::declval<Other const &>()))) {
+                    return Derived{lhs.underlying_value()
+                                   << detail::underlying_value(rhs)};
+                }
+                friend Derived &
+                operator<<=(Derived &lhs, Other const &rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()<<=
+                    detail::underlying_value(std::declval<Other const &>()))) {
+                    lhs.underlying_value()<<= detail::underlying_value(rhs);
+                    return lhs;
+                }
+            };
+        };
+
+        template <typename Other>
+        template <typename Derived, typename ValueType>
+        struct bitwise_left_shift<Other>::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator<<(Derived const &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>()
+                << detail::underlying_value(std::declval<Other const &>()))) {
+                return Derived{lhs.underlying_value()
+                               << detail::underlying_value(rhs)};
+            }
+            friend Derived &
+            operator<<=(Derived &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType &>()<<=
+                detail::underlying_value(std::declval<Other const &>()))) {
+                lhs.underlying_value()<<= detail::underlying_value(rhs);
+                return lhs;
+            }
+        };
+
+        template <typename Other> struct bitwise_right_shift {
+            template <
+                typename Derived, typename ValueType,
+                bool= std::is_literal_type<ValueType>::value>
+            struct mixin {
+                friend constexpr Derived
+                operator>>(Derived const &lhs, Other const &rhs) noexcept(
+                    noexcept(
+                        std::declval<ValueType const &>() >>
+                        detail::underlying_value(
+                            std::declval<Other const &>()))) {
+                    return Derived{lhs.underlying_value() >>
+                                   detail::underlying_value(rhs)};
+                }
+                friend Derived &
+                operator>>=(Derived &lhs, Other const &rhs) noexcept(noexcept(
+                    std::declval<ValueType &>()>>=
+                    detail::underlying_value(std::declval<Other const &>()))) {
+                    lhs.underlying_value()>>= detail::underlying_value(rhs);
+                    return lhs;
+                }
+            };
+        };
+
+        template <typename Other>
+        template <typename Derived, typename ValueType>
+        struct bitwise_right_shift<Other>::mixin<Derived, ValueType, false> {
+            friend Derived
+            operator>>(Derived const &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType const &>() >>
+                detail::underlying_value(std::declval<Other const &>()))) {
+                return Derived{lhs.underlying_value() >>
+                               detail::underlying_value(rhs)};
+            }
+            friend Derived &
+            operator>>=(Derived &lhs, Other const &rhs) noexcept(noexcept(
+                std::declval<ValueType &>()>>=
+                detail::underlying_value(std::declval<Other const &>()))) {
+                lhs.underlying_value()>>= detail::underlying_value(rhs);
+                return lhs;
+            }
+        };
+
+    }
 }
 
 namespace std {
-    template <
-        typename Tag, typename ValueType,
-        jss::strong_typedef_properties Properties>
-    struct hash<jss::strong_typedef<Tag, ValueType, Properties>> {
+    template <typename Tag, typename ValueType, typename... Properties>
+    struct hash<jss::strong_typedef<Tag, ValueType, Properties...>> {
         template <typename Arg>
         typename std::enable_if<
             std::is_same<
-                Arg, jss::strong_typedef<Tag, ValueType, Properties>>::value &&
-                jss::detail::is_strong_typedef_with_properties<
-                    Arg, jss::strong_typedef_properties::hashable>::value,
+                Arg,
+                jss::strong_typedef<Tag, ValueType, Properties...>>::value &&
+                std::is_base_of<
+                    jss::strong_typedef_properties::hashable::base, Arg>::value,
             size_t>::type
         operator()(Arg const &arg) const noexcept(noexcept(
             std::hash<ValueType>()(std::declval<ValueType const &>()))) {
