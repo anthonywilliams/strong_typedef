@@ -12,7 +12,7 @@ ifeq ($(CXX),cl)
 CXXFLAGS=/std:c++17 /EHsc
 OUTPUTFLAG=/Fe
 else
-CXXFLAGS=-std=c++17
+CXXFLAGS=-std=c++17 -g
 OUTPUTFLAG=-o 
 endif
 
