@@ -6,67 +6,97 @@
 #include <ostream>
 
 namespace jss {
+    /// Internal implementation namespace
     namespace detail {
+        /// A small type used for operation tests
         using small_result= char;
+        /// A large type with a different size to the small type, used for
+        /// operation tests
         struct large_result {
             small_result dummy[2];
         };
 
     } // namespace detail
 
+    /// The strong_typedef template used to create unique types with
+    /// specific properties.
+    ///
+    /// Tag is a tag type used for uniqueness. It can be incomplete as
+    /// it is never used for anything except creating unique template
+    /// instantiations
+    ///
+    /// ValueType is the type this Strong typedef is based on: it is the type of
+    /// the underlying value
+    ///
+    /// Properties are types that provide mixins that enable certain operations
+    /// on values of this type.
     template <typename Tag, typename ValueType, typename... Properties>
     class strong_typedef
         : public Properties::template mixin<
               strong_typedef<Tag, ValueType, Properties...>, ValueType>... {
     public:
+        /// The underlying value type
         using underlying_value_type= ValueType;
 
+        /// A default constructed strong_typedef has a default-constructed value
         constexpr strong_typedef() noexcept : value() {}
 
+        /// Construct a strong_typedef holding the specified value
         explicit constexpr strong_typedef(ValueType value_) noexcept(
             std::is_nothrow_move_constructible<ValueType>::value) :
             value(std::move(value_)) {}
 
+        /// Explicit conversion operator to read the underlying value
         explicit constexpr operator ValueType const &() const noexcept {
             return value;
         }
 
+        /// Get a const reference to the underlying value
         constexpr ValueType const &underlying_value() const noexcept {
             return value;
         }
 
+        /// Get a reference to the underlying value
         constexpr ValueType &underlying_value() noexcept {
             return value;
         }
 
-        friend inline constexpr ValueType &underlying_value(strong_typedef &t) {
+        /// Get a reference to the underlying value
+        friend constexpr ValueType &underlying_value(strong_typedef &t) {
             return t.underlying_value();
         }
 
-        friend inline constexpr ValueType const &
+        /// Get a const reference to the underlying value
+        friend constexpr ValueType const &
         underlying_value(strong_typedef const &t) {
             return t.underlying_value();
         }
 
-        friend inline constexpr ValueType &&
-        underlying_value(strong_typedef &&t) {
+        /// Get a const rvalue reference to the underlying value
+        friend constexpr ValueType &&underlying_value(strong_typedef &&t) {
             return std::move(t.underlying_value());
         }
 
-        friend inline constexpr ValueType const &&
+        /// Get an rvalue reference to the underlying value
+        friend constexpr ValueType const &&
         underlying_value(strong_typedef const &&t) {
             return std::move(t.underlying_value());
         }
 
     private:
+        /// The underlying value
         ValueType value;
     };
 
+    /// The underlying value of a value that is not a strong_typedef is just
+    /// that value
     template <typename T> constexpr T &&underlying_value(T &&t) {
         return std::forward<T>(t);
     }
 
+    /// Namespace to wrap the property types
     namespace strong_typedef_properties {
+        /// Add operator== and operator!= to the strong_typedef
         struct equality_comparable {
             template <typename Derived, typename ValueType> struct mixin {
                 friend constexpr bool
@@ -86,6 +116,7 @@ namespace jss {
             };
         };
 
+        /// Add the preincrement operator to the strong_typedef
         struct pre_incrementable {
             template <typename Derived, typename ValueType> struct mixin {
                 friend Derived &operator++(Derived &self) noexcept(
@@ -96,6 +127,7 @@ namespace jss {
             };
         };
 
+        /// Add the post-increment operator to the strong_typedef
         struct post_incrementable {
             template <typename Derived, typename ValueType> struct mixin {
                 friend Derived operator++(Derived &self, int) noexcept(
@@ -105,12 +137,14 @@ namespace jss {
             };
         };
 
+        /// Add both pre- and post-increment operators to the strong_typedef
         struct incrementable {
             template <typename Derived, typename ValueType>
             struct mixin : pre_incrementable::mixin<Derived, ValueType>,
                            post_incrementable::mixin<Derived, ValueType> {};
         };
 
+        /// Add the pre-decrement operator to the strong_typedef
         struct pre_decrementable {
             template <typename Derived, typename ValueType> struct mixin {
                 friend Derived &operator--(Derived &self) noexcept(
@@ -121,6 +155,7 @@ namespace jss {
             };
         };
 
+        /// Add the post-decrement operator to the strong_typedef
         struct post_decrementable {
             template <typename Derived, typename ValueType> struct mixin {
                 friend Derived operator--(Derived &self, int) noexcept(
@@ -130,12 +165,15 @@ namespace jss {
             };
         };
 
+        /// Add both pre- and post-decrement operators to the strong_typedef
         struct decrementable {
             template <typename Derived, typename ValueType>
             struct mixin : pre_decrementable::mixin<Derived, ValueType>,
                            post_decrementable::mixin<Derived, ValueType> {};
         };
 
+        /// Add operator+ that supports adding the strong_typedef to anything
+        /// the underlying value can be added to
         struct generic_mixed_addable {
             template <typename Derived, typename ValueType> struct mixin {
                 template <typename Rhs>
@@ -174,6 +212,7 @@ namespace jss {
 #define JSS_COMPOUND_ASSIGN(op_symbol) op_symbol##=
 
 #define JSS_DEFINE_OP_MIXINS(name, op_symbol)                                  \
+    /** Add operator op_symbol to the strong_typedef **/                       \
     template <typename Other> struct mixed_##name {                            \
         template <                                                             \
             typename Derived, typename ValueType,                              \
@@ -301,6 +340,16 @@ namespace jss {
               mixed_##name<ValueType>::template mixin<Derived, ValueType> {};  \
     };
 
+        /// Define mixins for the built-in operators
+        ///
+        /// self_xxx provides the operation where both LHS and RHS are
+        /// the strong_typedef
+        ///
+        /// mixed_xxx<Other> provides the operation where only the LHS or RHS
+        /// is the strong_typedef and the other operand is of type Other
+        ///
+        /// xxx combines self_xxx and mixed_xxx<underlying_value_type>
+        ///
         JSS_DEFINE_OP_MIXINS(addable, +)
         JSS_DEFINE_OP_MIXINS(subtractable, -)
         JSS_DEFINE_OP_MIXINS(multiplicable, *)
@@ -310,6 +359,8 @@ namespace jss {
         JSS_DEFINE_OP_MIXINS(bitwise_and, &)
         JSS_DEFINE_OP_MIXINS(bitwise_xor, ^)
 
+        /// Allow subtraction with any type that can be subtracted from the
+        /// underlying value, or the underlying value can be subtracted from
         struct generic_mixed_subtractable {
             template <typename Derived, typename ValueType> struct mixin {
                 template <typename Rhs>
@@ -346,6 +397,8 @@ namespace jss {
             };
         };
 
+        /// Allow subtracting two strong_typedef instances to produce
+        /// a DifferenceType value tha represents the difference
         template <typename DifferenceType> struct difference {
             template <typename Derived, typename ValueType> struct mixin {
                 friend DifferenceType
@@ -359,6 +412,7 @@ namespace jss {
             };
         };
 
+        /// Add ordering comparison operators to the strong_typedef
         struct ordered {
             template <typename Derived, typename ValueType> struct mixin {
                 friend constexpr bool
@@ -392,6 +446,8 @@ namespace jss {
             };
         };
 
+        /// Add ordering comparisons to the strong_typedef where the
+        /// other operand is of type Other
         template <typename Other> struct mixed_ordered {
             template <typename Derived, typename ValueType> struct mixin {
                 friend typename std::enable_if<
@@ -524,12 +580,14 @@ namespace jss {
             };
         };
 
+        /// Allow this strong_typedef to be used with std::hash
         struct hashable {
             struct base {};
             template <typename Derived, typename ValueType>
             struct mixin : base {};
         };
 
+        /// Add a stream operator to write the strong_typedef to a std::ostream
         struct streamable {
             template <typename Derived, typename ValueType> struct mixin {
                 friend std::ostream &
@@ -539,6 +597,7 @@ namespace jss {
             };
         };
 
+        /// Combine ordered and equality_comparable
         struct comparable {
             template <typename Derived, typename ValueType>
             struct mixin
@@ -546,6 +605,8 @@ namespace jss {
                   equality_comparable::template mixin<Derived, ValueType> {};
         };
 
+        /// Add a division operation to the strong_typedef that
+        /// produces a RatioType instances representing the result
         template <typename RatioType> struct ratio {
             template <typename Derived, typename ValueType> struct mixin {
                 friend RatioType
@@ -559,6 +620,7 @@ namespace jss {
             };
         };
 
+        /// Add the bitwise not operator to the strong_typedef
         struct bitwise_not {
             template <
                 typename Derived, typename ValueType,
@@ -579,6 +641,7 @@ namespace jss {
             }
         };
 
+        /// Add the bitwise left-shift operator to the strong_typedef
         template <typename Other> struct bitwise_left_shift {
             template <
                 typename Derived, typename ValueType,
@@ -620,6 +683,7 @@ namespace jss {
             }
         };
 
+        /// Add the bitwise right-shift operator to the strong_typedef
         template <typename Other> struct bitwise_right_shift {
             template <
                 typename Derived, typename ValueType,
@@ -665,6 +729,8 @@ namespace jss {
 } // namespace jss
 
 namespace std {
+    /// A specialization of std::hash for those instances of strong_typedef that
+    /// have the hashable property
     template <typename Tag, typename ValueType, typename... Properties>
     struct hash<jss::strong_typedef<Tag, ValueType, Properties...>> {
         template <typename Arg>
