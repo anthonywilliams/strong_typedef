@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/anthonywilliams/strong_typedef.svg?branch=master)](https://travis-ci.com/anthonywilliams/strong_typedef)
 
-This is an implementation of a class template that provides a wrapper type that is convertible to
+This is an implementation of a C++17 class template that provides a wrapper type that is convertible to
 and from the underlying type, but is distinct from it.
 
 The purpose of this is primarily to enable things like indexes and IDs to be unique types. This is
