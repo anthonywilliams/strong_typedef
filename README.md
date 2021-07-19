@@ -178,116 +178,50 @@ can be any combination of the types in the `jss::strong_typedef_properties` name
 jss::strong_typedef_properties::comparable`). Each property adds some behaviour. The available
 properties are:
 
-* `jss::strong_typedef_properties::equality_comparable` => Can be compared for equality (`st==st2`)
-  and inequality (`st!=st2`)
-* `jss::strong_typedef_properties::pre_incrementable` => Supports preincrement (`++st`)
-* `jss::strong_typedef_properties::post_incrementable` => Supports postincrement (`st++`)
-* `jss::strong_typedef_properties::pre_decrementable` => Supports predecrement (`--st`)
-* `jss::strong_typedef_properties::post_decrementable` => Supports postdecrement (`st--`)
-* `jss::strong_typedef_properties::self_addable` => Supports addition of two objects of the strong
-  typedef (`st+st2`) where the result is convertible to the underlying type. The result is a new
-  instance of the strong typedef.
-* `jss::strong_typedef_properties::mixed_addable<T>` => Supports addition of an object of the strong
-  typedef with another object of type `T` either way round (`st+value` or `value+st`) where the
-  result is convertible to the underlying type. The result is a new instance of the strong typedef.
-* `jss::strong_typedef_properties::addable` => Combines `self_addable` and
-  `mixed_addable<ValueType>`
-* `jss::strong_typedef_properties::generic_mixed_addable` => Supports addition of an object of the
-  strong typedef with another object of any type either way round (`st+value` or `value+st`) where
-  the result is convertible to the underlying type. The result is a new instance of the strong
-  typedef.
-* `jss::strong_typedef_properties::self_subtractable` => Supports subtraction of two objects of the
-  strong typedef (`st-st2`) where the result is convertible to the underlying type. The result is a
-  new instance of the strong typedef.
-* `jss::strong_typedef_properties::mixed_subtractable<T>` => Supports subtraction of an object of
-  the strong typedef with another object of type `T` either way round (`st-value` or `value-st`)
-  where the result is convertible to the underlying type. The result is a new instance of the strong
-  typedef.
-* `jss::strong_typedef_properties::generic_mixed_subtractable` => Supports subtraction of an object
-  of the strong typedef with another object of any type either way round (`st-value` or `value-st`)
-  where the result is convertible to the underlying type. The result is a new instance of the strong
-  typedef.
-* `jss::strong_typedef_properties::subtractable` => Combines `self_subtractable` and
-  `mixed_subtractable<ValueType>`
-* `jss::strong_typedef_properties::difference<T>` => Supports subtraction of two objects of the
-  strong typedef (`st-st2`) where the result is convertible to `T`. The result is an object of type `T`.
-* `jss::strong_typedef_properties::self_multiplicable` => Supports multiplication of two objects of
-  the strong typedef (`st*st2`) where the result is convertible to the underlying type. The result
-  is a new instance of the strong typedef.
-* `jss::strong_typedef_properties::mixed_multiplicable<T>` => Supports multiplication of an object
-  of the strong typedef with another object of type `T` either way round (`st*value` or `value*st`)
-  where the result is convertible to the underlying type. The result is a new instance of the strong
-  typedef.
-* `jss::strong_typedef_properties::multiplicable` => Combines `self_multiplicable` and
-  `mixed_multiplicable<ValueType>`
-* `jss::strong_typedef_properties::self_divisible` => Supports division of two objects of the strong
-  typedef (`st/st2`) where the result is convertible to the underlying type. The result is a new
-  instance of the strong typedef.
-* `jss::strong_typedef_properties::mixed_divisible<T>` => Supports division of an object of the
-  strong typedef with another object of type `T` either way round (`st/value` or `value/st`) where
-  the result is convertible to the underlying type. The result is a new instance of the strong
-  typedef.
-* `jss::strong_typedef_properties::divisible` => Combines `self_divisible` and
-  `mixed_divisible<ValueType>`
-* `jss::strong_typedef_properties::self_modulus` => Supports modulus operations on two objects of the strong
-  typedef (`st%st2`) where the result is convertible to the underlying type. The result is a new
-  instance of the strong typedef.
-* `jss::strong_typedef_properties::mixed_modulus<T>` => Supports modulus operations on an object of
-  the strong typedef with another object of type `T` either way round (`st%value` or `value%st`)
-  where the result is convertible to the underlying type. The result is a new instance of the strong
-  typedef.
-* `jss::strong_typedef_properties::modulus` => Combines `self_modulus` and
-  `mixed_modulus<ValueType>`
-* `jss::strong_typedef_properties::ratio<T>` => Supports division of two objects of the strong
-  typedef (`st/st2`) where the result is convertible to `T`. The result is an object of type `T`.
-* `jss::strong_typedef_properties::ordered` => Supports ordering comparisons (`st<st2`, `st>st2`,
-  `st<=st2`, `st>=st2`)
-* `jss::strong_typedef_properties::mixed_ordered<T>` => Supports ordering comparisons where only one
-  of the values is a strong typedef and the other is `T`
-* `jss::strong_typedef_properties::self_bitwise_or` => Supports bitwise or of two objects of the
-  strong typedef (`st|st2`) where the result is convertible to the underlying type. The result is a
-  new instance of the strong typedef.
-* `jss::strong_typedef_properties::mixed_bitwise_or<T>` => Supports bitwise or of an object of the
-  strong typedef with another object of type `T` either way round (`st|value` or `value|st`) where
-  the result is convertible to the underlying type. The result is a new instance of the strong
-  typedef.
-* `jss::strong_typedef_properties::bitwise_or` => Combines `self_bitwise_or` and
-  `mixed_bitwise_or<ValueType>`
-* `jss::strong_typedef_properties::self_bitwise_xor` => Supports bitwise xor of two objects of the
-  strong typedef (`st^st2`) where the result is convertible to the underlying type. The result is a
-  new instance of the strong typedef.
-* `jss::strong_typedef_properties::mixed_bitwise_xor<T>` => Supports bitwise xor of an object of the
-  strong typedef with another object of type `T` either way round (`st^value` or `value^st`) where
-  the result is convertible to the underlying type. The result is a new instance of the strong
-  typedef.
-* `jss::strong_typedef_properties::bitwise_xor` => Combines `self_bitwise_xor` and
-  `mixed_bitwise_xor<ValueType>`
-* `jss::strong_typedef_properties::self_bitwise_and` => Supports bitwise and of two objects of the
-  strong typedef (`st&st2`) where the result is convertible to the underlying type. The result is a
-  new instance of the strong typedef.
-* `jss::strong_typedef_properties::mixed_bitwise_and<T>` => Supports bitwise and of an object of the
-  strong typedef with another object of type `T` either way round (`st&value` or `value&st`) where
-  the result is convertible to the underlying type. The result is a new instance of the strong
-  typedef.
-* `jss::strong_typedef_properties::bitwise_and` => Combines `self_bitwise_and` and
-  `mixed_bitwise_and<ValueType>`
-* `jss::strong_typedef_properties::bitwise_left_shift<T>` => Supports bitwise left shift of an
-  object of the strong typedef by the value another object of type `T` (`st<<value`) where the
-  result is convertible to the underlying type. The result is a new instance of the strong typedef.
-* `jss::strong_typedef_properties::bitwise_right_shift<T>` => Supports bitwise right shift of an
-  object of the strong typedef by the value another object of type `T` (`st>>value`) where the
-  result is convertible to the underlying type. The result is a new instance of the strong typedef.
-* `jss::strong_typedef_properties::hashable` => Supports hashing with `std::hash`
-* `jss::strong_typedef_properties::streamable` => Can be written to a `std::ostream` with
-  `operator<<`
-* `jss::strong_typedef_properties::incrementable` => Combines
-  `jss::strong_typedef_properties::pre_incrementable` and
-  `jss::strong_typedef_properties::post_incrementable`
-* `jss::strong_typedef_properties::decrementable` => Combines
-  `jss::strong_typedef_properties::pre_decrementable` and
-  `jss::strong_typedef_properties::post_decrementable`
-* `jss::strong_typedef_properties::comparable` => Combines `jss::strong_typedef_properties::ordered`
-  and `jss::strong_typedef_properties::equality_comparable`
+| `jss::strong_typedef_properties` | Description |
+| --- | --- |
+| `equality_comparable` | Can be compared for equality (`st==st2`) and inequality (`st!=st2`) |
+| `pre_incrementable` | Supports preincrement (`++st`) |
+| `post_incrementable` | Supports postincrement (`st++`) |
+| `pre_decrementable` | Supports predecrement (`--st`) |
+| `post_decrementable` | Supports postdecrement (`st--`) |
+| `self_addable` | Supports addition of two objects of the strong typedef (`st+st2`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `mixed_addable<T>` | Supports addition of an object of the strong typedef with another object of type `T` either way round (`st+value` or `value+st`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `addable` | Combines `self_addable` and `mixed_addable<ValueType>` |
+| `generic_mixed_addable` | Supports addition of an object of the strong typedef with another object of any type either way round (`st+value` or `value+st`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `self_subtractable` | Supports subtraction of two objects of the strong typedef (`st-st2`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `mixed_subtractable<T>` | Supports subtraction of an object of the strong typedef with another object of type `T` either way round (`st-value` or `value-st`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `generic_mixed_subtractable` | Supports subtraction of an object of the strong typedef with another object of any type either way round (`st-value` or `value-st`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `subtractable` | Combines `self_subtractable` and `mixed_subtractable<ValueType>` |
+| `difference<T>` | Supports subtraction of two objects of the strong typedef (`st-st2`) where the result is convertible to `T`. The result is an object of type `T`. |
+| `self_multiplicable` | Supports multiplication of two objects of the strong typedef (`st*st2`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `mixed_multiplicable<T>` | Supports multiplication of an object of the strong typedef with another object of type `T` either way round (`st*value` or `value*st`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `multiplicable` | Combines `self_multiplicable` and `mixed_multiplicable<ValueType>` |
+| `self_divisible` | Supports division of two objects of the strong typedef (`st/st2`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `mixed_divisible<T>` | Supports division of an object of the strong typedef with another object of type `T` either way round (`st/value` or `value/st`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `divisible` | Combines `self_divisible` and `mixed_divisible<ValueType>` |
+| `self_modulus` | Supports modulus operations on two objects of the strong typedef (`st%st2`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `mixed_modulus<T>` | Supports modulus operations on an object of the strong typedef with another object of type `T` either way round (`st%value` or `value%st`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `modulus` | Combines `self_modulus` and `mixed_modulus<ValueType>` |
+| `ratio<T>` | Supports division of two objects of the strong typedef (`st/st2`) where the result is convertible to `T`. The result is an object of type `T`. |
+| `ordered` | Supports ordering comparisons (`st<st2`, `st>st2`, `st<=st2`, `st>=st2`) |
+| `mixed_ordered<T>` | Supports ordering comparisons where only one of the values is a strong typedef and the other is `T` |
+| `self_bitwise_or` | Supports bitwise or of two objects of the strong typedef (`st|st2`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `mixed_bitwise_or<T>` | Supports bitwise or of an object of the strong typedef with another object of type `T` either way round (`st|value` or `value|st`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `bitwise_or` | Combines `self_bitwise_or` and `mixed_bitwise_or<ValueType>` |
+| `self_bitwise_xor` | Supports bitwise xor of two objects of the strong typedef (`st^st2`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `mixed_bitwise_xor<T>` | Supports bitwise xor of an object of the strong typedef with another object of type `T` either way round (`st^value` or `value^st`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `bitwise_xor` | Combines `self_bitwise_xor` and `mixed_bitwise_xor<ValueType>` |
+| `self_bitwise_and` | Supports bitwise and of two objects of the strong typedef (`st&st2`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `mixed_bitwise_and<T>` | Supports bitwise and of an object of the strong typedef with another object of type `T` either way round (`st&value` or `value&st`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `bitwise_and` | Combines `self_bitwise_and` and `mixed_bitwise_and<ValueType>` |
+| `bitwise_left_shift<T>` | Supports bitwise left shift of an object of the strong typedef by the value another object of type `T` (`st<<value`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `bitwise_right_shift<T>` | Supports bitwise right shift of an object of the strong typedef by the value another object of type `T` (`st>>value`) where the result is convertible to the underlying type. The result is a new instance of the strong typedef. |
+| `hashable` | Supports hashing with `std::hash` |
+| `streamable` |Can be written to a `std::ostream` with `operator<<` |
+| `incrementable` | Combines `pre_incrementable` and `post_incrementable` |
+| `decrementable` | Combines `pre_decrementable` and `post_decrementable` |
+| `comparable` | Combines `ordered` and `equality_comparable` |
   
 For operators where `st op rhs` yields an instance of the strong typedef, `st op= rhs` is also
 defined as `st.underlying_value() op= rhs`.
