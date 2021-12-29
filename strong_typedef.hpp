@@ -1,3 +1,8 @@
+//          Copyright Anthony Williams 2019 - 2022.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          https://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef JSS_STRONG_TYPEDEF_HPP
 #define JSS_STRONG_TYPEDEF_HPP
 #include <type_traits>
