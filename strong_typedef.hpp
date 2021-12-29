@@ -119,7 +119,7 @@ namespace jss {
         /// Add the preincrement operator to the strong_typedef
         struct pre_incrementable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend Derived &operator++(Derived &self) noexcept(
+                friend constexpr Derived &operator++(Derived &self) noexcept(
                     noexcept(++std::declval<ValueType &>())) {
                     ++self.underlying_value();
                     return self;
@@ -130,7 +130,7 @@ namespace jss {
         /// Add the post-increment operator to the strong_typedef
         struct post_incrementable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend Derived operator++(Derived &self, int) noexcept(
+                friend constexpr Derived operator++(Derived &self, int) noexcept(
                     noexcept(std::declval<ValueType &>()++)) {
                     return Derived{self.underlying_value()++};
                 }
@@ -147,7 +147,7 @@ namespace jss {
         /// Add the pre-decrement operator to the strong_typedef
         struct pre_decrementable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend Derived &operator--(Derived &self) noexcept(
+                friend constexpr Derived &operator--(Derived &self) noexcept(
                     noexcept(--std::declval<ValueType &>())) {
                     --self.underlying_value();
                     return self;
@@ -158,7 +158,7 @@ namespace jss {
         /// Add the post-decrement operator to the strong_typedef
         struct post_decrementable {
             template <typename Derived, typename ValueType> struct mixin {
-                friend Derived operator--(Derived &self, int) noexcept(
+                friend constexpr Derived operator--(Derived &self, int) noexcept(
                     noexcept(std::declval<ValueType &>()--)) {
                     return Derived{self.underlying_value()--};
                 }
@@ -177,7 +177,7 @@ namespace jss {
         struct generic_mixed_addable {
             template <typename Derived, typename ValueType> struct mixin {
                 template <typename Rhs>
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Rhs, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -193,7 +193,7 @@ namespace jss {
                 }
 
                 template <typename Lhs>
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Lhs, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -215,8 +215,7 @@ namespace jss {
     /** Add operator op_symbol to the strong_typedef **/                       \
     template <typename Other> struct mixed_##name {                            \
         template <                                                             \
-            typename Derived, typename ValueType,                              \
-            bool= std::is_literal_type<ValueType>::value>                      \
+            typename Derived, typename ValueType>                              \
         struct mixin {                                                         \
             friend constexpr Derived                                           \
             operator op_symbol(Derived const &lhs, Other const &rhs) noexcept( \
@@ -235,7 +234,7 @@ namespace jss {
                                    op_symbol rhs.underlying_value()};          \
             }                                                                  \
                                                                                \
-            friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(           \
+            friend constexpr Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)( \
                 Derived &lhs,                                                  \
                 Other const                                                    \
                     &rhs) noexcept(noexcept(std::declval<ValueType &>()        \
@@ -250,43 +249,10 @@ namespace jss {
             }                                                                  \
         };                                                                     \
     };                                                                         \
-    template <typename Other>                                                  \
-    template <typename Derived, typename ValueType>                            \
-    struct mixed_##name<Other>::mixin<Derived, ValueType, false> {             \
-        friend Derived                                                         \
-        operator op_symbol(Derived const &lhs, Other const &rhs) noexcept(     \
-            noexcept(std::declval<ValueType const &>()                         \
-                         op_symbol underlying_value(                           \
-                             std::declval<Other const &>()))) {                \
-            return Derived{lhs.underlying_value()                              \
-                               op_symbol underlying_value(rhs)};               \
-        }                                                                      \
                                                                                \
-        friend Derived                                                         \
-        operator op_symbol(Other const &lhs, Derived const &rhs) noexcept(     \
-            noexcept(underlying_value(std::declval<Other const &>())           \
-                         op_symbol std::declval<ValueType const &>())) {       \
-            return Derived{underlying_value(lhs)                               \
-                               op_symbol rhs.underlying_value()};              \
-        }                                                                      \
-                                                                               \
-        friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(               \
-            Derived &lhs,                                                      \
-            Other const                                                        \
-                &rhs) noexcept(noexcept(std::declval<ValueType &>()            \
-                                            JSS_COMPOUND_ASSIGN(op_symbol)     \
-                                                underlying_value(              \
-                                                    std::declval<              \
-                                                        Other const &>()))) {  \
-            lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol)              \
-                underlying_value(rhs);                                         \
-            return lhs;                                                        \
-        }                                                                      \
-    };                                                                         \
     struct self_##name {                                                       \
         template <                                                             \
-            typename Derived, typename ValueType,                              \
-            bool= std::is_literal_type<ValueType>::value>                      \
+            typename Derived, typename ValueType>                              \
         struct mixin {                                                         \
             friend constexpr Derived operator op_symbol(                       \
                 Derived const &lhs,                                            \
@@ -297,7 +263,7 @@ namespace jss {
                 return Derived{lhs.underlying_value()                          \
                                    op_symbol rhs.underlying_value()};          \
             }                                                                  \
-            friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(           \
+            friend constexpr Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)( \
                 Derived &lhs,                                                  \
                 Derived const                                                  \
                     &rhs) noexcept(noexcept(std::declval<ValueType &>()        \
@@ -312,27 +278,6 @@ namespace jss {
         };                                                                     \
     };                                                                         \
                                                                                \
-    template <typename Derived, typename ValueType>                            \
-    struct self_##name::mixin<Derived, ValueType, false> {                     \
-        friend Derived                                                         \
-        operator op_symbol(Derived const &lhs, Derived const &rhs) noexcept(   \
-            noexcept(std::declval<ValueType const &>()                         \
-                         op_symbol std::declval<ValueType const &>())) {       \
-            return Derived{lhs.underlying_value()                              \
-                               op_symbol rhs.underlying_value()};              \
-        }                                                                      \
-        friend Derived &operator JSS_COMPOUND_ASSIGN(op_symbol)(               \
-            Derived &lhs,                                                      \
-            Derived const                                                      \
-                &rhs) noexcept(noexcept(std::declval<ValueType &>()            \
-                                            JSS_COMPOUND_ASSIGN(op_symbol)     \
-                                                std::declval<                  \
-                                                    ValueType const &>())) {   \
-            lhs.underlying_value() JSS_COMPOUND_ASSIGN(op_symbol)              \
-                rhs.underlying_value();                                        \
-            return lhs;                                                        \
-        }                                                                      \
-    };                                                                         \
     struct name {                                                              \
         template <typename Derived, typename ValueType>                        \
         struct mixin                                                           \
@@ -364,7 +309,7 @@ namespace jss {
         struct generic_mixed_subtractable {
             template <typename Derived, typename ValueType> struct mixin {
                 template <typename Rhs>
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Rhs, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -380,7 +325,7 @@ namespace jss {
                 }
 
                 template <typename Lhs>
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Lhs, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -401,7 +346,7 @@ namespace jss {
         /// a DifferenceType value tha represents the difference
         template <typename DifferenceType> struct difference {
             template <typename Derived, typename ValueType> struct mixin {
-                friend DifferenceType
+                friend constexpr DifferenceType
                 operator-(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() -
@@ -450,7 +395,7 @@ namespace jss {
         /// other operand is of type Other
         template <typename Other> struct mixed_ordered {
             template <typename Derived, typename ValueType> struct mixin {
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -466,7 +411,7 @@ namespace jss {
                     return lhs.underlying_value() < underlying_value(rhs);
                 }
 
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -482,7 +427,7 @@ namespace jss {
                     return underlying_value(lhs) < rhs.underlying_value();
                 }
 
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -498,7 +443,7 @@ namespace jss {
                     return lhs.underlying_value() > underlying_value(rhs);
                 }
 
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -514,7 +459,7 @@ namespace jss {
                     return underlying_value(lhs) > rhs.underlying_value();
                 }
 
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -530,7 +475,7 @@ namespace jss {
                     return lhs.underlying_value() >= underlying_value(rhs);
                 }
 
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -546,7 +491,7 @@ namespace jss {
                     return underlying_value(lhs) >= rhs.underlying_value();
                 }
 
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -562,7 +507,7 @@ namespace jss {
                     return lhs.underlying_value() <= underlying_value(rhs);
                 }
 
-                friend typename std::enable_if<
+                friend constexpr typename std::enable_if<
                     !std::is_same<Other, Derived>::value &&
                         std::is_convertible<
                             decltype(
@@ -609,7 +554,7 @@ namespace jss {
         /// produces a RatioType instances representing the result
         template <typename RatioType> struct ratio {
             template <typename Derived, typename ValueType> struct mixin {
-                friend RatioType
+                friend constexpr RatioType
                 operator/(Derived const &lhs, Derived const &rhs) noexcept(
                     noexcept(
                         std::declval<ValueType const &>() /
@@ -623,8 +568,7 @@ namespace jss {
         /// Add the bitwise not operator to the strong_typedef
         struct bitwise_not {
             template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
+                typename Derived, typename ValueType>
             struct mixin {
                 friend constexpr Derived operator~(Derived const &lhs) noexcept(
                     noexcept(~std::declval<ValueType const &>())) {
@@ -633,19 +577,10 @@ namespace jss {
             };
         };
 
-        template <typename Derived, typename ValueType>
-        struct bitwise_not::mixin<Derived, ValueType, false> {
-            friend Derived operator~(Derived const &lhs) noexcept(
-                noexcept(~std::declval<ValueType const &>())) {
-                return Derived{~lhs.underlying_value()};
-            }
-        };
-
         /// Add the bitwise left-shift operator to the strong_typedef
         template <typename Other> struct bitwise_left_shift {
             template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
+                typename Derived, typename ValueType>
             struct mixin {
                 friend constexpr Derived
                 operator<<(Derived const &lhs, Other const &rhs) noexcept(
@@ -655,7 +590,7 @@ namespace jss {
                     return Derived{lhs.underlying_value()
                                    << underlying_value(rhs)};
                 }
-                friend Derived &
+                friend constexpr Derived &
                 operator<<=(Derived &lhs, Other const &rhs) noexcept(noexcept(
                     std::declval<ValueType &>()<<=
                     underlying_value(std::declval<Other const &>()))) {
@@ -665,29 +600,10 @@ namespace jss {
             };
         };
 
-        template <typename Other>
-        template <typename Derived, typename ValueType>
-        struct bitwise_left_shift<Other>::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator<<(Derived const &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>()
-                << underlying_value(std::declval<Other const &>()))) {
-                return Derived{lhs.underlying_value() << underlying_value(rhs)};
-            }
-            friend Derived &
-            operator<<=(Derived &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType &>()<<=
-                underlying_value(std::declval<Other const &>()))) {
-                lhs.underlying_value()<<= underlying_value(rhs);
-                return lhs;
-            }
-        };
-
         /// Add the bitwise right-shift operator to the strong_typedef
         template <typename Other> struct bitwise_right_shift {
             template <
-                typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
+                typename Derived, typename ValueType>
             struct mixin {
                 friend constexpr Derived
                 operator>>(Derived const &lhs, Other const &rhs) noexcept(
@@ -697,7 +613,7 @@ namespace jss {
                     return Derived{lhs.underlying_value() >>
                                    underlying_value(rhs)};
                 }
-                friend Derived &
+                friend constexpr Derived &
                 operator>>=(Derived &lhs, Other const &rhs) noexcept(noexcept(
                     std::declval<ValueType &>()>>=
                     underlying_value(std::declval<Other const &>()))) {
@@ -706,25 +622,6 @@ namespace jss {
                 }
             };
         };
-
-        template <typename Other>
-        template <typename Derived, typename ValueType>
-        struct bitwise_right_shift<Other>::mixin<Derived, ValueType, false> {
-            friend Derived
-            operator>>(Derived const &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType const &>() >>
-                underlying_value(std::declval<Other const &>()))) {
-                return Derived{lhs.underlying_value() >> underlying_value(rhs)};
-            }
-            friend Derived &
-            operator>>=(Derived &lhs, Other const &rhs) noexcept(noexcept(
-                std::declval<ValueType &>()>>=
-                underlying_value(std::declval<Other const &>()))) {
-                lhs.underlying_value()>>= underlying_value(rhs);
-                return lhs;
-            }
-        };
-
     } // namespace strong_typedef_properties
 } // namespace jss
 
@@ -734,6 +631,7 @@ namespace std {
     template <typename Tag, typename ValueType, typename... Properties>
     struct hash<jss::strong_typedef<Tag, ValueType, Properties...>> {
         template <typename Arg>
+        constexpr
         typename std::enable_if<
             std::is_same<
                 Arg,
