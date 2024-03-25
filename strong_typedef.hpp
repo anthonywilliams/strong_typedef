@@ -216,7 +216,7 @@ namespace jss {
     template <typename Other> struct mixed_##name {                            \
         template <                                                             \
             typename Derived, typename ValueType,                              \
-            bool= std::is_integral<ValueType>::value>                          \
+            bool= std::is_arithmetic<ValueType>::value>                        \
         struct mixin {                                                         \
             friend constexpr Derived                                           \
             operator op_symbol(Derived const &lhs, Other const &rhs) noexcept( \
@@ -286,7 +286,7 @@ namespace jss {
     struct self_##name {                                                       \
         template <                                                             \
             typename Derived, typename ValueType,                              \
-            bool= std::is_integral<ValueType>::value>                          \
+            bool= std::is_arithmetic<ValueType>::value>                        \
         struct mixin {                                                         \
             friend constexpr Derived operator op_symbol(                       \
                 Derived const &lhs,                                            \

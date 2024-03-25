@@ -1817,6 +1817,20 @@ void test_adding_two_strong_typedefs() {
     static_assert(st3.underlying_value() == 69);
     static_assert(st4.underlying_value() == 69);
 
+    using STD1= jss::strong_typedef<struct tag1, double>;
+    using STD2= jss::strong_typedef<
+        struct tag2, double, jss::strong_typedef_properties::mixed_addable<STD1>>;
+
+    constexpr STD1 std1(23.4);
+    constexpr STD2 std2(45.6);
+
+    constexpr STD2 std3= std2 + std1;
+    constexpr STD2 std4= std1 + std2;
+
+    static_assert(std3.underlying_value() == 69.0);
+    static_assert(std4.underlying_value() == 69.0);
+
+
     using STS1= jss::strong_typedef<struct tag1, std::string>;
     using STS2= jss::strong_typedef<
         struct tag2, std::string,
