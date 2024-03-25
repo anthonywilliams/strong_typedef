@@ -216,7 +216,7 @@ namespace jss {
     template <typename Other> struct mixed_##name {                            \
         template <                                                             \
             typename Derived, typename ValueType,                              \
-            bool= std::is_literal_type<ValueType>::value>                      \
+            bool= std::is_arithmetic<ValueType>::value>                        \
         struct mixin {                                                         \
             friend constexpr Derived                                           \
             operator op_symbol(Derived const &lhs, Other const &rhs) noexcept( \
@@ -286,7 +286,7 @@ namespace jss {
     struct self_##name {                                                       \
         template <                                                             \
             typename Derived, typename ValueType,                              \
-            bool= std::is_literal_type<ValueType>::value>                      \
+            bool= std::is_arithmetic<ValueType>::value>                        \
         struct mixin {                                                         \
             friend constexpr Derived operator op_symbol(                       \
                 Derived const &lhs,                                            \
@@ -624,7 +624,7 @@ namespace jss {
         struct bitwise_not {
             template <
                 typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
+                bool= std::is_integral<ValueType>::value>
             struct mixin {
                 friend constexpr Derived operator~(Derived const &lhs) noexcept(
                     noexcept(~std::declval<ValueType const &>())) {
@@ -645,7 +645,7 @@ namespace jss {
         template <typename Other> struct bitwise_left_shift {
             template <
                 typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
+                bool= std::is_integral<ValueType>::value>
             struct mixin {
                 friend constexpr Derived
                 operator<<(Derived const &lhs, Other const &rhs) noexcept(
@@ -687,7 +687,7 @@ namespace jss {
         template <typename Other> struct bitwise_right_shift {
             template <
                 typename Derived, typename ValueType,
-                bool= std::is_literal_type<ValueType>::value>
+                bool= std::is_integral<ValueType>::value>
             struct mixin {
                 friend constexpr Derived
                 operator>>(Derived const &lhs, Other const &rhs) noexcept(
